@@ -1,0 +1,1952 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tuestes Black Mamba</title>
+<meta name="description" content="Registro de tuestes de Black Mamba: logs de Kaffelogic y Artisan, cata, referencias, inventario y trazabilidad.">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2b1c12">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tuestes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+
+/* Layout: a roaster's logbook — month summary, one dense ledger with a phase bar per batch, side sheet for detail, import and edit. */
+:root{
+  --bg:#f3f1ec; --surface:#fbfaf7; --line:#dcd6cc; --fg:#221c17; --muted:#6f655b;
+  --accent:#8a4b1f; --accent-fg:#fff8f0; --good:#3f6b3a; --warn:#9a6a12; --bad:#a23a2a;
+  --ph-dry:#e3c9a6; --ph-mai:#b9804a; --ph-dev:#5e3219; --ph-ink-light:#2a1a0e; --ph-ink-dark:#fbefe2;
+  --curve-bt:#b3541e; --curve-pr:#8d8378; --grid:#e7e2da;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#4a3aa7; --s8:#e34948;
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --shadow:0 12px 40px rgb(34 28 23 / .18);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#171411; --surface:#1f1b17; --line:#352e27; --fg:#eee7de; --muted:#a3988b;
+  --accent:#d9955c; --accent-fg:#1a120b; --good:#8fbf85; --warn:#e0b458; --bad:#e8826f;
+  --ph-dry:#6d5641; --ph-mai:#a8703f; --ph-dev:#e2b684; --ph-ink-light:#fbefe2; --ph-ink-dark:#2a1a0e;
+  --curve-bt:#ee9a5c; --curve-pr:#8f857a; --grid:#2c2621;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+  --shadow:0 12px 40px rgb(0 0 0 / .5); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#171411; --surface:#1f1b17; --line:#352e27; --fg:#eee7de; --muted:#a3988b;
+  --accent:#d9955c; --accent-fg:#1a120b; --good:#8fbf85; --warn:#e0b458; --bad:#e8826f;
+  --ph-dry:#6d5641; --ph-mai:#a8703f; --ph-dev:#e2b684; --ph-ink-light:#fbefe2; --ph-ink-dark:#2a1a0e;
+  --curve-bt:#ee9a5c; --curve-pr:#8f857a; --grid:#2c2621;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+  --shadow:0 12px 40px rgb(0 0 0 / .5); color-scheme:dark}
+
+*{box-sizing:border-box}
+.view{display:flex;flex-direction:column;gap:22px}
+.monthbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:-10px}
+.monthbar h2{font:700 22px/1.2 var(--f-display);margin:0;min-width:190px;text-align:center}
+.monthbar h2::first-letter{text-transform:uppercase}
+.navbtn{font-size:20px;line-height:1;padding:6px 12px}
+.navbtn:disabled{opacity:.3}
+.months{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-top:-8px}
+.months button{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;gap:4px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 12px;cursor:pointer;min-width:96px}
+.months button[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.months small{color:var(--muted);font-size:12px}
+.months small::first-letter{text-transform:uppercase}
+.months b{font:500 15px/1.1 var(--f-mono);font-variant-numeric:tabular-nums}
+.months i{display:block;height:4px;border-radius:2px;background:var(--accent);min-width:2px}
+.view[hidden]{display:none}
+/* tabs */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-top:-8px}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:10px 14px;cursor:pointer;color:var(--muted);font-weight:500;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+/* compare */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;padding:8px 12px;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.picks{display:flex;flex-wrap:wrap;gap:8px}
+label.chip input{width:auto;padding:0;border:0;background:none}
+label.chip{white-space:nowrap;display:inline-flex;flex-direction:row;color:var(--fg);align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 12px 6px 8px;cursor:pointer;font-size:13.5px;font-family:var(--f-mono)}
+.chip input{margin:0;accent-color:var(--accent)}
+.chip .sw{width:12px;height:12px;border-radius:50%;margin:0;background:var(--line)}
+.chip[data-on="false"]{color:var(--muted)}
+.chip small{color:var(--muted);font-family:var(--f-body)}
+.plot{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.plot h3{font:700 17px/1.2 var(--f-display);margin:0}
+.plot .sub{color:var(--muted);font-size:13px;margin:0}
+.legend2{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted)}
+.legend2 span{display:inline-flex;align-items:center;gap:6px}
+.legend2 i{display:inline-block;width:16px;height:0;border-top:2px solid}
+.mult{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.mcell{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0;position:relative}
+.mcell header{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.mcell h4{margin:0;font-size:13.5px;font-weight:600}
+.mcell .stat-line{font:500 12px/1.3 var(--f-mono);color:var(--muted);text-align:right}
+.mcell .stat-line b{color:var(--fg);font-weight:500}
+.mcell svg{display:block;width:100%;height:auto;overflow:visible}
+.stab{display:inline-block;font-size:11.5px;padding:1px 7px;border-radius:99px;border:1px solid currentColor}
+.stab.ok{color:var(--good)}.stab.warn{color:var(--warn)}.stab.bad{color:var(--bad)}
+.ctip{position:absolute;pointer-events:none;background:var(--fg);color:var(--bg);font:12px/1.4 var(--f-mono);padding:7px 9px;border-radius:6px;white-space:nowrap;z-index:5}
+.ctip b{font-weight:500}
+.ctip .k{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:0}
+.sumtable{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.sumtable td,.sumtable th{padding:9px 12px}
+.sumtable tbody tr{cursor:default}
+.empty-plot{padding:36px 16px;text-align:center;color:var(--muted)}
+label.inline{white-space:nowrap;flex-direction:row;align-items:center;gap:8px;font-size:13.5px}
+label.inline select{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;width:auto;max-width:100%}
+label.check input{width:auto;accent-color:var(--accent)}
+.corr{margin:0;font-size:14px}
+.corr b{font-family:var(--f-mono);font-weight:500}
+.star{color:var(--accent);margin-left:4px}
+.ref-note{border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--muted);background:var(--bg)}
+.ref-note strong{color:var(--fg)}
+.devtab{border:1px solid var(--line);border-radius:8px;overflow-x:auto}
+.devtab table{font-size:13.5px}
+.devtab td,.devtab th{padding:8px 10px}
+.devtab tbody tr{cursor:default}
+.tag{display:inline-block;font-size:11.5px;padding:1px 8px;border-radius:99px;border:1px solid currentColor;white-space:nowrap}
+.tag.ok{color:var(--good)}.tag.warn{color:var(--warn)}.tag.bad{color:var(--bad)}.tag.mute{color:var(--muted)}
+.rorrow{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;font-size:13.5px;color:var(--muted)}
+.rorrow b{font-family:var(--f-mono);font-weight:500;color:var(--fg)}
+.stock{display:flex;align-items:center;gap:8px;min-width:150px}
+.stock .bar{flex:1;height:8px;border-radius:4px;background:var(--grid);overflow:hidden;min-width:70px}
+.stock .bar i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.stock span{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:13px;min-width:54px;text-align:right}
+.inv tbody tr{cursor:pointer}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-body)}
+.wrap{max-width:1280px;margin:0 auto;padding-inline:clamp(16px,3vw,32px);padding-block:24px 64px;display:flex;flex-direction:column;gap:22px}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line);padding-bottom:18px}
+.brand{display:flex;flex-direction:column;gap:2px}
+.eyebrow{font:500 11px/1.2 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+h1{font:700 clamp(28px,4vw,40px)/1.05 var(--f-display);margin:0;letter-spacing:-.01em;text-wrap:balance}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 14px;cursor:pointer;font-weight:500}
+.btn:hover{border-color:var(--muted)}
+.btn:disabled{opacity:.55;cursor:default}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.danger{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,var(--line))}
+.btn.ghost{background:transparent;border-color:transparent}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.stat{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.stat b{font:500 26px/1.1 var(--f-mono);font-variant-numeric:tabular-nums}
+.stat small{color:var(--muted);font-size:12.5px}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.toolbar input,.toolbar select{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-width:0}
+.toolbar input{flex:1 1 220px}
+.toolbar select{max-width:100%}
+.count{color:var(--muted);font-size:13px;margin-left:auto}
+
+.ledger{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font:500 11px/1.2 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:12px 10px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:bottom}
+th small{display:block;letter-spacing:0;text-transform:none;font-size:11px;opacity:.8}
+td{padding:10px 10px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:middle}
+tr:last-child td{border-bottom:0}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:color-mix(in srgb,var(--accent) 6%,transparent)}
+.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.ev{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right;line-height:1.25}
+.ev span{display:block;color:var(--muted);font-size:12px}
+.lot{font-family:var(--f-mono);font-size:13px}
+.origin{max-width:230px;overflow:hidden;text-overflow:ellipsis}
+.origin span{display:block;color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis}
+.flag.ok{color:var(--good)}.flag.warn{color:var(--warn)}.flag.bad{color:var(--bad)}
+.pill{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+
+/* phase bar */
+.phase{display:flex;gap:2px;height:10px;min-width:120px;border-radius:3px;overflow:hidden}
+.phase i{display:block;height:100%}
+.phase i:nth-child(1){background:var(--ph-dry)}.phase i:nth-child(2){background:var(--ph-mai)}.phase i:nth-child(3){background:var(--ph-dev)}
+.phase.big{height:34px;border-radius:6px}
+.phase.big i{display:flex;align-items:center;justify-content:center;font:500 12px/1 var(--f-mono);overflow:hidden;white-space:nowrap}
+.phase.big i:nth-child(1),.phase.big i:nth-child(2){color:var(--ph-ink-light)}
+.phase.big i:nth-child(3){color:var(--ph-ink-dark)}
+.phase-legend{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.phase-legend div{display:flex;flex-direction:column;gap:1px}
+.phase-legend b{font:500 17px/1.2 var(--f-mono);font-variant-numeric:tabular-nums}
+.phase-legend small{color:var(--muted);font-size:12px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+.empty{padding:48px 24px;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center;color:var(--muted)}
+.empty h2{font:700 22px/1.2 var(--f-display);color:var(--fg);margin:0}
+.empty p{max-width:56ch;margin:0}
+
+.cards{display:none;flex-direction:column;gap:10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:6px;cursor:pointer;text-align:left;width:100%}
+.card .row{display:flex;justify-content:space-between;gap:10px}
+.card .meta{color:var(--muted);font-size:13px}
+@media (max-width:820px){.ledger{display:none}.cards{display:flex}}
+
+/* drag overlay */
+.dropzone{position:fixed;inset:0;z-index:30;background:color-mix(in srgb,var(--bg) 85%,transparent);display:flex;align-items:center;justify-content:center;pointer-events:none}
+.dropzone div{border:2px dashed var(--accent);border-radius:14px;padding:40px 48px;font:700 22px/1.2 var(--f-display);color:var(--accent);background:var(--surface)}
+
+/* side panel */
+.scrim{position:fixed;inset:0;background:rgb(0 0 0 / .35);z-index:10}
+.panel{position:fixed;top:0;right:0;bottom:0;width:min(720px,100%);background:var(--surface);z-index:11;box-shadow:var(--shadow);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid var(--line)}
+.panel-head h2{font:700 22px/1.15 var(--f-display);margin:0;min-width:0}
+.panel-head h2 small{display:block;font:400 13px/1.3 var(--f-body);color:var(--muted);margin-top:2px}
+.panel-body > *{flex-shrink:0}
+.panel-body{overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:20px;flex:1}
+.panel-foot{display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-wrap:wrap;padding:14px 20px;border-top:1px solid var(--line)}
+.panel-foot .hint{margin-right:auto;color:var(--muted);font-size:13px}
+fieldset{border:0;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+fieldset legend{font:500 11px/1 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding:0}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);min-width:0}
+label.full{grid-column:1/-1}
+label.two{grid-column:span 2}
+label input,label select,label textarea{background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;color:var(--fg);width:100%;min-width:0}
+input.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+textarea{min-height:80px;resize:vertical}
+.err{color:var(--bad);font-size:13px}
+.section-title{font:700 17px/1.2 var(--f-display);margin:0}
+dl.detail{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px 18px;margin:0}
+dl.detail div{display:flex;flex-direction:column;gap:1px;min-width:0}
+dl.detail dt{color:var(--muted);font-size:12.5px}
+dl.detail dd{margin:0;font-family:var(--f-mono);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.evgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.evgrid div{background:var(--bg);padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.evgrid b{font:500 19px/1.1 var(--f-mono);font-variant-numeric:tabular-nums}
+.evgrid small{font-size:11.5px;color:var(--muted)}
+.notes{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px}
+.confirm{display:flex;flex-wrap:wrap;align-items:center;gap:8px;color:var(--bad);font-size:14px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:8px;z-index:40;font-size:14px;max-width:calc(100% - 32px)}
+.notice{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:10px 14px;color:var(--muted);font-size:14px}
+
+/* chart */
+.chart{position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .legend{display:flex;gap:16px;font-size:12.5px;color:var(--muted);margin-bottom:6px;flex-wrap:wrap}
+.chart .legend i{display:inline-block;width:18px;height:0;border-top:2px solid;vertical-align:middle;margin-right:6px}
+.tip{position:absolute;pointer-events:none;background:var(--fg);color:var(--bg);font:12px/1.35 var(--f-mono);padding:6px 8px;border-radius:6px;white-space:nowrap;transform:translate(-50%,-110%)}
+
+/* import table */
+.imp{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+.imp table{font-size:13.5px}
+.imp td,.imp th{padding:8px 8px}
+.imp tbody tr{cursor:default}
+.imp input[type=text]{width:84px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-family:var(--f-mono)}
+.imp .dup{color:var(--warn);font-size:12px}
+.imp .bad{color:var(--bad);font-size:12px}
+.drop-inline{border:2px dashed var(--line);border-radius:10px;padding:28px 16px;text-align:center;color:var(--muted);display:flex;flex-direction:column;gap:10px;align-items:center}
+.drop-inline strong{color:var(--fg);font-family:var(--f-display);font-size:18px}
+@media (max-width:560px){fieldset{grid-template-columns:1fr 1fr}label.two{grid-column:1/-1}.evgrid{grid-template-columns:repeat(2,1fr)}}
+@media (prefers-reduced-motion:no-preference){.panel{animation:slide .18s ease-out}@keyframes slide{from{transform:translateX(24px);opacity:.6}}}
+
+.gate{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px 16px;overflow:auto}
+.gate-card{width:min(400px,100%);display:flex;flex-direction:column;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:28px 24px;box-shadow:var(--shadow)}
+.gate-card h1{font-size:30px}
+.gate-card p{margin:0;color:var(--muted)}
+.gate-card label input{font-size:16px}
+.gate-card code{font-family:var(--f-mono);font-size:13px;background:var(--bg);padding:1px 5px;border-radius:4px}
+.acct-actions{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="eyebrow">Black Mamba · Tostaduría</span>
+      <h1>Registro de tuestes</h1>
+    </div>
+    <div class="actions">
+      <button class="btn" id="btn-account" hidden>Cuenta</button>
+      <button class="btn" id="btn-export" hidden>Exportar a Excel</button>
+      <button class="btn" id="btn-new" hidden>Registro manual</button>
+      <button class="btn primary" id="btn-import" hidden>Cargar logs</button>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tab-log" aria-selected="true">Registro</button>
+    <button role="tab" id="tab-cmp" aria-selected="false">Comparar perfiles</button>
+    <button role="tab" id="tab-inv" aria-selected="false">Inventario</button>
+  </nav>
+
+  <div id="notice" class="notice" hidden></div>
+
+  <div id="view-log" class="view">
+  <div class="monthbar">
+    <button class="btn ghost navbtn" id="m-prev" aria-label="Mes anterior">‹</button>
+    <h2 id="m-label">—</h2>
+    <button class="btn ghost navbtn" id="m-next" aria-label="Mes siguiente">›</button>
+    <button class="btn ghost" id="m-now" hidden>Volver al mes actual</button>
+  </div>
+  <section class="stats" aria-label="Resumen del mes">
+    <div class="stat"><span class="eyebrow">Tuestes del mes</span><b id="s-count">—</b><small id="s-count-sub">&nbsp;</small></div>
+    <div class="stat"><span class="eyebrow">Tostado en el mes</span><b id="s-kg">—</b><small id="s-kg-sub">kg de café tostado</small></div>
+    <div class="stat"><span class="eyebrow">Merma promedio</span><b id="s-loss">—</b><small>pérdida de peso del mes</small></div>
+    <div class="stat"><span class="eyebrow">Desarrollo promedio</span><b id="s-dev">—</b><small>% del tueste tras el 1.er crack</small></div>
+  </section>
+  <div class="months" id="months" aria-label="Kilos tostados por mes"></div>
+
+  <div class="toolbar">
+    <input id="q" type="search" placeholder="Buscar por log, origen, varietal, perfil o notas" aria-label="Buscar">
+    <select id="f-coffee" aria-label="Café"><option value="">Todos los cafés</option></select>
+    <select id="f-machine" aria-label="Tostadora"><option value="">Todas las tostadoras</option></select>
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="ledger">
+    <table>
+      <thead><tr>
+        <th>Log</th><th>Fecha</th><th>Café</th>
+        <th class="num">Verde<small>g</small></th><th class="num">Tostado<small>g</small></th><th class="num">Merma</th>
+        <th class="num">CC<small>tiempo · °C</small></th><th class="num">1.er crack<small>tiempo · °C</small></th><th class="num">Final<small>tiempo · °C</small></th>
+        <th class="num">DEV</th><th class="num">Cata<small>pts · reposo</small></th><th>Fases<small><span class="sw" style="background:var(--ph-dry)"></span>secado <span class="sw" style="background:var(--ph-mai)"></span>Maillard <span class="sw" style="background:var(--ph-dev)"></span>desarrollo</small></th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="empty">
+      <h2>Aún no hay tuestes registrados</h2>
+      <p>Arrastra aquí los logs .klog de la Kaffelogic o .alog de Artisan (Santoker), o usa «Cargar logs». Los tiempos, temperaturas y fases se leen solos; tú agregas el café y el peso final.</p>
+    </div>
+  </div>
+  <div class="cards" id="cards"></div>
+  </div>
+
+  <div id="view-cmp" class="view" hidden>
+    <div class="toolbar">
+      <select id="c-origin" aria-label="Café"></select>
+      <select id="c-profile" aria-label="Perfil"><option value="">Todos los perfiles</option></select>
+      <span class="seg" role="group" aria-label="Qué graficar">
+        <button id="c-m-bt" aria-pressed="true">Temperatura</button><button id="c-m-ror" aria-pressed="false">RoR</button>
+      </span>
+    </div>
+    <div>
+      <div class="eyebrow" style="margin-bottom:8px">Tuestes con curva · elige hasta 8</div>
+      <div class="picks" id="c-picks"></div>
+    </div>
+    <section class="plot" id="c-overlay-wrap">
+      <div><h3 id="c-title">Curvas superpuestas</h3><p class="sub" id="c-sub"></p></div>
+      <div class="legend2" id="c-legend"></div>
+      <div style="position:relative" id="c-overlay"></div>
+    </section>
+    <section style="display:flex;flex-direction:column;gap:12px">
+      <div><h3 class="section-title">Estabilidad en el tiempo</h3>
+        <p class="sub" id="c-stab-sub" style="color:var(--muted);font-size:13px;margin:4px 0 0"></p></div>
+      <div class="mult" id="c-mult"></div>
+      <div class="sumtable"><table>
+        <thead><tr><th>Métrica</th><th class="num">Promedio</th><th class="num">Desv. estándar</th><th class="num">Mín.</th><th class="num">Máx.</th><th class="num">Rango</th><th class="num">Tuestes</th></tr></thead>
+        <tbody id="c-table"></tbody>
+      </table></div>
+    </section>
+    <section class="plot">
+      <div><h3>Relaciones entre variables</h3>
+        <p class="sub">Elige dos variables para ver si una influye en la otra. Por ejemplo, la temperatura ambiente sobre el tiempo de 1.er crack, o el desarrollo sobre la cata.</p></div>
+      <div class="toolbar">
+        <label class="inline">Eje horizontal <select id="x-var"></select></label>
+        <label class="inline">Eje vertical <select id="y-var"></select></label>
+        <label class="inline check"><input type="checkbox" id="x-all"> Incluir todos los cafés</label>
+      </div>
+      <p class="corr" id="x-corr"></p>
+      <div style="position:relative" id="x-plot"></div>
+    </section>
+  </div>
+
+  <div id="view-inv" class="view" hidden>
+    <section class="stats" aria-label="Resumen de inventario">
+      <div class="stat"><span class="eyebrow">Café verde en stock</span><b id="v-kg">—</b><small>kg, todos los lotes</small></div>
+      <div class="stat"><span class="eyebrow">Valor del stock</span><b id="v-val">—</b><small>a precio de compra</small></div>
+      <div class="stat"><span class="eyebrow">Lotes activos</span><b id="v-lots">—</b><small id="v-low">&nbsp;</small></div>
+      <div class="stat"><span class="eyebrow">Costo promedio</span><b id="v-cost">—</b><small>por kg tostado, últimos 30 días</small></div>
+    </section>
+    <div class="toolbar">
+      <p class="sub" style="margin:0;flex:1 1 320px;color:var(--muted);font-size:13.5px">Cada tueste descuenta su peso inicial del lote más antiguo del mismo café que tenga stock (primero en entrar, primero en salir). Solo cuentan los tuestes desde la fecha de compra del lote.</p>
+      <button class="btn primary" id="btn-lot" hidden>Agregar lote de café verde</button>
+    </div>
+    <div class="ledger inv">
+      <table>
+        <thead><tr><th>Café</th><th>Lote · proveedor</th><th>Compra</th><th class="num">Precio<small>CLP por kg</small></th>
+          <th class="num">Comprado<small>kg</small></th><th class="num">Usado<small>kg</small></th><th>Restante</th><th class="num">Costo tostado<small>CLP por kg</small></th><th>Estado</th></tr></thead>
+        <tbody id="inv-rows"></tbody>
+      </table>
+      <div class="empty" id="inv-empty">
+        <h2>Aún no hay lotes de café verde</h2>
+        <p>Registra cada saco o compra con su precio. Desde ahí, cada tueste descuenta del stock y calcula cuánto te cuesta el kilo tostado.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="file" accept=".klog,.alog" multiple hidden>
+<div class="dropzone" id="dropzone" hidden><div>Suelta los logs .klog o .alog</div></div>
+<div class="scrim" id="scrim" hidden></div>
+<aside class="panel" id="panel" hidden aria-modal="true" role="dialog" aria-labelledby="panel-title">
+  <div class="panel-head">
+    <h2 id="panel-title">—</h2>
+    <button class="btn ghost" id="btn-close" aria-label="Cerrar">Cerrar</button>
+  </div>
+  <div class="panel-body" id="panel-body"></div>
+  <div class="panel-foot" id="panel-foot"></div>
+</aside>
+<div class="toast" id="toast" hidden></div>
+
+
+<div class="gate" id="gate" hidden>
+  <form class="gate-card" id="login-form" novalidate>
+    <span class="eyebrow">Black Mamba · Tostaduría</span>
+    <h1>Registro de tuestes</h1>
+    <p id="gate-msg">Entra con la cuenta que te dio Diego.</p>
+    <label>Correo<input id="lg-email" type="email" autocomplete="username" required></label>
+    <label>Contraseña<input id="lg-pass" type="password" autocomplete="current-password" required></label>
+    <div class="err" id="lg-err" hidden></div>
+    <button class="btn primary" id="lg-go" type="submit">Entrar</button>
+    <button class="btn ghost" id="lg-reset" type="button">Olvidé mi contraseña</button>
+  </form>
+  <div class="gate-card" id="setup" hidden>
+    <span class="eyebrow">Configuración pendiente</span>
+    <h1>Falta conectar Firebase</h1>
+    <p>Abre el archivo <code>firebase-config.js</code> en el repositorio y pega ahí la configuración de tu proyecto de Firebase. Los pasos están en <code>LEEME.md</code>.</p>
+  </div>
+</div>
+<input type="file" id="backup-file" accept=".json,application/json" hidden>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script>
+(() => {
+const MACHINES = ["Kaffelogic Nano 7","Santoker RX5","Otra"];
+const DESTS = ["Espresso","Filtro","Omni","Muestra"];
+const COL = "tuestes", CAFES = "cafes", VERDE = "verde", REFS = "referencias";
+const SHELF_MONTHS = 12;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+let db = null, myId = null, canWrite = null, downloads = true, myEmail = "";
+let roasts = [], cafes = [], lots = [], refs = [];
+let openId = null;
+let selMonth = null;   // "YYYY-MM" shown in the summary; null = current month
+let staged = [];   // parsed klogs waiting in the import sheet
+
+MACHINES.forEach(m => $("#f-machine").insertAdjacentHTML("beforeend", `<option>${esc(m)}</option>`));
+
+// ---------- helpers ----------
+const fmtT = s => s == null || !isFinite(s) ? "—" : `${Math.floor(Math.round(s)/60)}:${String(Math.round(s)%60).padStart(2,"0")}`;
+const parseT = s => {
+  if (s == null || String(s).trim() === "") return null;
+  const m = String(s).trim().match(/^(\d{1,2}):(\d{1,2})$/);
+  return m ? (+m[1])*60 + (+m[2]) : NaN;
+};
+const num = (v, d=0) => v == null || !isFinite(v) ? "—" : Number(v).toLocaleString("es-CL",{maximumFractionDigits:d,minimumFractionDigits:d});
+const pct = v => v == null || !isFinite(v) ? "—" : v.toFixed(1).replace(".",",") + "%";
+const deg = v => v == null || !isFinite(v) ? "—" : v.toFixed(1).replace(".",",") + "°";
+const pad2 = n => String(n).padStart(2,"0");
+const localDate = d => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+const today = () => localDate(new Date());
+const fmtDate = s => { if (!s) return "—"; const [y,m,d] = s.split("-"); return `${d}-${m}-${y.slice(2)}`; };
+const slug = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,80) || "cafe";
+const logId = n => "kl-" + String(n).padStart(4,"0");
+const short = r => r.logNo != null ? String(r.logNo) : r.batchNo != null ? "#" + r.batchNo : "—";
+const tag = r => r.logNo != null ? "Log " + r.logNo : r.batchNo != null ? "Batch #" + r.batchNo : "Tueste " + fmtDate(r.date);
+
+function metrics(r) {
+  const end = r.endS, cc = r.ccS, fc = r.fcS;
+  const ok = v => v != null && isFinite(v) && v > 0;
+  const m = {};
+  m.loss = (ok(r.greenG) && ok(r.roastedG)) ? (r.greenG - r.roastedG) / r.greenG * 100 : null;
+  if (ok(end)) {
+    if (ok(fc) && fc < end) { m.devS = end - fc; m.dev = m.devS / end * 100; }
+    if (ok(cc) && cc < end) { m.dryS = cc; m.dry = cc / end * 100; }
+    if (ok(cc) && ok(fc) && cc < fc) { m.maiS = fc - cc; m.mai = m.maiS / end * 100; }
+  }
+  return m;
+}
+const lossFlag = l => l == null ? "" : (l < 11 || l > 20) ? "bad" : (l < 12 || l > 18) ? "warn" : "ok";
+const phaseBar = (m, big) => {
+  if (m.dry == null || m.mai == null || m.dev == null) return big ? "" : `<span class="pill">sin fases</span>`;
+  const lab = (v, s) => big && v >= 9 ? `${pct(v)}` : "";
+  return `<div class="phase${big?" big":""}" role="img" aria-label="Secado ${pct(m.dry)}, Maillard ${pct(m.mai)}, desarrollo ${pct(m.dev)}">
+    <i style="flex:${m.dry}">${lab(m.dry)}</i><i style="flex:${m.mai}">${lab(m.mai)}</i><i style="flex:${m.dev}">${lab(m.dev)}</i></div>`;
+};
+
+// ---------- derived data: reference, RoR, cost, traceability ----------
+const clp = v => v == null || !isFinite(v) ? "—" : "$" + Math.round(v).toLocaleString("es-CL");
+const refKey = (origin, profile) => slug(origin) + "--" + (profile ? slug(profile) : "todos");
+function refFor(r) {
+  if (!r || !r.origin) return null;
+  const hit = (r.profile && refs.find(x => x.origin === r.origin && x.profile === r.profile)) || refs.find(x => x.origin === r.origin && !x.profile);
+  if (!hit) return null;
+  const ref = roasts.find(x => x.id === hit.roastId);
+  return ref ? { ...hit, roast: ref } : null;
+}
+const isRef = r => refs.some(x => x.roastId === r.id);
+const restDays = r => {
+  if (!r.cupDate || !r.date) return null;
+  const d = (Date.parse(r.cupDate) - Date.parse(r.date)) / 864e5;
+  return isFinite(d) && d >= 0 ? Math.round(d) : null;
+};
+const addMonths = (s, n) => { const [y,m,d] = s.split("-").map(Number); const dt = new Date(y, m - 1 + n, d); return localDate(dt); };
+const prodLot = r => {
+  if (!r.date) return "—";
+  const [y,m,d] = r.date.split("-");
+  return `BM-${y.slice(2)}${m}${d}-${r.logNo != null ? String(r.logNo).padStart(3,"0") : r.batchNo != null ? "S" + String(r.batchNo).padStart(3,"0") : String(r.id).slice(-4).toUpperCase()}`;
+};
+const rorCache = new WeakMap();
+function rorMetrics(r) {
+  if (!hasCurve(r)) return null;
+  if (rorCache.has(r)) return rorCache.get(r);
+  const c = r.curve, ror = rorOf(c), end = r.endS || c.t[c.t.length - 1];
+  const at = t => interp(c.t, ror, t);
+  const ccR = r.ccS ? at(r.ccS) : null;
+  const fcR = r.fcS ? at(r.fcS) : null;
+  const endR = at(Math.min(end, c.t[c.t.length - 1]) - 2);
+  let crash = false, flick = false, minR = null, minT = null;
+  if (r.fcS && fcR != null) {
+    // crash: RoR falls 3+ °C/min within the first 60 s after first crack
+    c.t.forEach((t, i) => { if (t > r.fcS && t <= Math.min(end, r.fcS + 60) && ror[i] != null && (minR == null || ror[i] < minR)) { minR = ror[i]; minT = t; } });
+    crash = minR != null && fcR - minR >= 3;
+    // flick: after its lowest point in development, RoR climbs 1+ °C/min before the drop
+    let devMin = null, devMinT = null;
+    c.t.forEach((t, i) => { if (t >= r.fcS && t <= end && ror[i] != null && (devMin == null || ror[i] < devMin)) { devMin = ror[i]; devMinT = t; } });
+    let after = null;
+    c.t.forEach((t, i) => { if (devMinT != null && t > devMinT && t <= end && ror[i] != null) after = after == null ? ror[i] : Math.max(after, ror[i]); });
+    flick = after != null && after - devMin >= 1;
+  }
+  const stall = endR != null && endR < 3;
+  const out = { ccR, fcR, endR, crash, flick, stall };
+  rorCache.set(r, out);
+  return out;
+}
+// FIFO: each roast consumes green coffee from the oldest lot of the same coffee bought on or before the roast date
+let alloc = { byRoast: new Map(), byLot: new Map() };
+function computeAlloc() {
+  const byRoast = new Map(), byLot = new Map();
+  lots.forEach(l => byLot.set(l.id, { usedG: 0, roasts: [] }));
+  const origins = [...new Set(lots.map(l => l.origin))];
+  for (const o of origins) {
+    const ls = lots.filter(l => l.origin === o && l.kg > 0).sort((a,b) => (a.purchaseDate||"").localeCompare(b.purchaseDate||"") || (a.createdAt||0) - (b.createdAt||0));
+    const rs = roasts.filter(r => r.origin === o && r.greenG > 0 && r.date).sort(chrono);
+    for (const r of rs) {
+      let need = r.greenG, cost = 0; const parts = [];
+      for (const l of ls) {
+        if (need <= 0) break;
+        if ((l.purchaseDate || "") > r.date) continue;
+        const u = byLot.get(l.id), left = l.kg * 1000 - u.usedG;
+        if (left <= 0) continue;
+        const take = Math.min(left, need);
+        u.usedG += take; u.roasts.push(r.id); need -= take;
+        cost += take / 1000 * (l.priceKg || 0);
+        parts.push({ lot: l, g: take });
+      }
+      if (parts.length) byRoast.set(r.id, { parts, cost, covered: need <= 0.01, priced: parts.every(p => p.lot.priceKg > 0) });
+    }
+  }
+  alloc = { byRoast, byLot };
+}
+const costOf = r => {
+  const a = alloc.byRoast.get(r.id);
+  if (!a || !a.covered || !a.priced) return null;
+  return { green: a.cost, perKgRoasted: r.roastedG > 0 ? a.cost / (r.roastedG / 1000) : null, lots: a.parts.map(p => p.lot) };
+};
+
+// ---------- klog parser ----------
+function parseKlog(text, fileName) {
+  const head = {}, events = {};
+  let cols = null; const rows = [];
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.replace(/\s+$/,"");
+    if (!line) continue;
+    if (line[0] === "!") {
+      const i = line.indexOf(":"); if (i < 0) continue;
+      const k = line.slice(1, i), v = line.slice(i+1).trim();
+      const n = Number(v);
+      if (["colour_change","first_crack","roast_end"].includes(k)) {
+        if (isFinite(n) && n > 0) events[k] = n; else if (n === 0 && k !== "roast_end") delete events[k];
+      } else events[k] = isFinite(n) && v !== "" ? n : v;
+      continue;
+    }
+    if (/^time\t/.test(line)) { cols = line.split("\t").map(c => c.replace(/[#=^]/g,"").trim()); continue; }
+    if (cols && /^-?\d/.test(line)) {
+      const p = line.split("\t").map(Number);
+      if (isFinite(p[0])) rows.push(p);
+      continue;
+    }
+    if (!cols) { const i = line.indexOf(":"); if (i > 0) head[line.slice(0,i)] = line.slice(i+1).trim(); }
+  }
+  if (!cols || !rows.length) throw new Error("No es un log de Kaffelogic válido.");
+  if (!events.roast_end) throw new Error("El log no tiene fin de tueste (¿tueste abortado?).");
+  const ci = name => cols.indexOf(name);
+  const iT = 0, iBT = ci("temp"), iPR = ci("profile");
+  const at = (t, i) => {
+    if (i < 0 || t == null) return null;
+    let j = rows.findIndex(r => r[iT] >= t);
+    if (j <= 0) return rows[Math.max(j,0)][i];
+    const a = rows[j-1], b = rows[j], f = (t - a[iT]) / (b[iT] - a[iT]);
+    return a[i] + (b[i] - a[i]) * f;
+  };
+  // temperatures read from the profile curve (as Kaffelogic Studio reports them)
+  const tempAt = t => at(t, iPR >= 0 ? iPR : iBT);
+  const m = (head.log_file_name || fileName || "").match(/log0*(\d+)\.klog/i);
+  const logNo = m ? +m[1] : null;
+  let roastedAt = null, date = null;
+  const dm = (head.roast_date || "").match(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2}):(\d{2})/);
+  if (dm) { const d = new Date(Date.UTC(+dm[3], +dm[2]-1, +dm[1], +dm[4], +dm[5], +dm[6])); roastedAt = d.toISOString(); date = localDate(d); }
+  const end = events.roast_end, cc = events.colour_change ?? null, fc = events.first_crack ?? null;
+  // downsampled curve to end of roast (every 2 s)
+  const curve = { t: [], bt: [], pr: [] };
+  let next = 0;
+  for (const r of rows) {
+    if (r[iT] > end + 0.5) break;
+    if (r[iT] >= next) { curve.t.push(+r[iT].toFixed(1)); curve.bt.push(+r[iBT].toFixed(1)); curve.pr.push(iPR >= 0 ? +r[iPR].toFixed(1) : null); next = r[iT] + 2; }
+  }
+  const r1 = v => v == null ? null : Math.round(v * 10) / 10;
+  return {
+    logNo, date, roastedAt, profile: head.profile_short_name || "", machine: "Kaffelogic Nano 7",
+    level: head.roasting_level ? +(+head.roasting_level).toFixed(2) : null,
+    ambientC: head.ambient_temperature ? r1(+head.ambient_temperature) : null,
+    loadG: head.reference_load_size ? Math.round(+head.reference_load_size) : 100,
+    ccS: r1(cc), ccC: r1(tempAt(cc)), fcS: r1(fc), fcC: r1(tempAt(fc)), endS: r1(end), endC: r1(tempAt(end)),
+    kaffelogicDev: typeof events.development_percent === "number" ? r1(events.development_percent) : null,
+    tastingNotes: head.tasting_notes || "",
+    curve, source: "klog", fileName, docId: logNo != null ? logId(logNo) : null
+  };
+}
+
+// ---------- Artisan (.alog) parser ----------
+// .alog files are a Python dict literal: parse it into a JS object without eval
+function parsePy(src) {
+  let i = 0;
+  const skip = () => { while (i < src.length && /\s/.test(src[i])) i++; };
+  const fail = m => { throw new Error("Archivo de Artisan no válido (" + m + ")."); };
+  function str() {
+    let q = src[i];
+    if (q === "u" || q === "b" || q === "r") { i++; q = src[i]; }
+    const triple = src.startsWith(q.repeat(3), i);
+    i += triple ? 3 : 1;
+    let out = "";
+    while (i < src.length) {
+      if (triple ? src.startsWith(q.repeat(3), i) : src[i] === q) { i += triple ? 3 : 1; return out; }
+      let c = src[i++];
+      if (c === "\\") {
+        const e = src[i++];
+        if (e === "n") out += "\n"; else if (e === "t") out += "\t"; else if (e === "r") out += "\r";
+        else if (e === "x") { out += String.fromCharCode(parseInt(src.substr(i, 2), 16)); i += 2; }
+        else if (e === "u") { out += String.fromCharCode(parseInt(src.substr(i, 4), 16)); i += 4; }
+        else if (e === "U") { out += String.fromCodePoint(parseInt(src.substr(i, 8), 16)); i += 8; }
+        else if (e === "\n") {} else out += e;
+      } else out += c;
+    }
+    fail("texto sin cerrar");
+  }
+  function val() {
+    skip();
+    const c = src[i];
+    if (c === "{") {
+      i++; const o = {};
+      for (;;) { skip(); if (src[i] === "}") { i++; return o; } const k = val(); skip(); if (src[i] !== ":") fail("se esperaba ':'"); i++; o[k] = val(); skip(); if (src[i] === ",") i++; }
+    }
+    if (c === "[" || c === "(") {
+      const close = c === "[" ? "]" : ")"; i++; const a = [];
+      for (;;) { skip(); if (src[i] === close) { i++; return a; } a.push(val()); skip(); if (src[i] === ",") i++; }
+    }
+    if (c === "'" || c === '"' || ((c === "u" || c === "b" || c === "r") && (src[i+1] === "'" || src[i+1] === '"'))) return str();
+    const m = /^(True|False|None|nan|-?inf|-?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?)/.exec(src.slice(i, i + 40));
+    if (!m) fail("valor inesperado cerca de «" + src.slice(i, i + 12) + "»");
+    i += m[0].length;
+    return { True: true, False: false, None: null, nan: null, inf: null, "-inf": null }.hasOwnProperty(m[0]) ? { True: true, False: false, None: null }[m[0]] ?? null : Number(m[0]);
+  }
+  const v = val();
+  if (!v || typeof v !== "object" || Array.isArray(v)) fail("no es un perfil");
+  return v;
+}
+function parseAlog(text, fileName) {
+  const d = parsePy(text);
+  const tx = d.timex, bt = d.temp2, et = d.temp1, ti = d.timeindex || [];
+  if (!Array.isArray(tx) || !Array.isArray(bt) || tx.length < 10) throw new Error("El archivo de Artisan no trae curva de temperatura.");
+  const F = (d.mode || "C") === "F";
+  const C = v => v == null || !isFinite(v) || v <= 0 ? null : Math.round((F ? (v - 32) * 5 / 9 : v) * 10) / 10;
+  const charge = ti[0] > 0 ? ti[0] : 0, t0 = tx[charge] || 0;
+  const evT = k => ti[k] > 0 ? tx[ti[k]] - t0 : null;
+  const evC = k => ti[k] > 0 ? C(bt[ti[k]]) : null;
+  const comp = d.computed || {};
+  const pick = (a, b) => a != null && isFinite(a) && a > 0 ? a : b;
+  const ccS = pick(comp.DRY_time, evT(1)), fcS = pick(comp.FCs_time, evT(2)), endS = pick(comp.DROP_time, evT(6));
+  if (!endS) throw new Error("El perfil no tiene marcado el DROP (fin del tueste).");
+  const ccC = comp.DRY_BT > 0 ? C(comp.DRY_BT) : evC(1), fcC = comp.FCs_BT > 0 ? C(comp.FCs_BT) : evC(2), endC = comp.DROP_BT > 0 ? C(comp.DROP_BT) : evC(6);
+  const curve = { t: [], bt: [], pr: [], et: [] };
+  let next = 0;
+  for (let k = charge; k < tx.length; k++) {
+    const t = tx[k] - t0;
+    if (t > endS + 0.5) break;
+    if (t >= next) { curve.t.push(+t.toFixed(1)); curve.bt.push(C(bt[k])); curve.pr.push(null); curve.et.push(Array.isArray(et) ? C(et[k]) : null); next = t + 2; }
+  }
+  const w = Array.isArray(d.weight) ? d.weight : [];
+  const toG = v => !(v > 0) ? null : /kg/i.test(w[2] || "") ? Math.round(v * 1000 * 10) / 10 : /lb/i.test(w[2] || "") ? Math.round(v * 453.6) : Math.round(v * 10) / 10;
+  let date = d.roastisodate || null, roastedAt = null;
+  if (d.roastepoch > 0) { const dt = new Date(d.roastepoch * 1000); roastedAt = dt.toISOString(); date = localDate(dt); }
+  let dens = null;
+  if (Array.isArray(d.density) && d.density[0] > 0 && d.density[2] > 0) {
+    const wG = /^kg$/i.test(d.density[1] || "") ? d.density[0] * 1000 : d.density[0];
+    const vL = /^ml$/i.test(d.density[3] || "") ? d.density[2] / 1000 : d.density[2];
+    dens = wG / vL / 1000;
+  }
+  const batchNo = d.roastbatchnr > 0 ? d.roastbatchnr : null;
+  const uid = String(d.roastUUID || d.roastepoch || (date + "-" + fileName)).replace(/[^A-Za-z0-9_-]/g, "").slice(0, 60);
+  return {
+    docId: "at-" + uid, logNo: null, batchNo, date, roastedAt, machine: "Santoker RX5",
+    profile: d.title && d.title !== "Roaster Scope" ? String(d.title) : "", fileOrigin: d.beans ? String(d.beans).split("\n")[0].trim() : "",
+    greenG: toG(w[0]), roastedG: toG(w[1]),
+    density: dens ? Math.round(dens * 1000) / 1000 : null, moisture: d.moisture_greens > 0 ? d.moisture_greens : null,
+    ambientC: d.ambientTemp > 0 ? C(d.ambientTemp) : null,
+    chargeC: comp.CHARGE_BT > 0 ? C(comp.CHARGE_BT) : C(bt[charge]),
+    tpS: comp.TP_time > 0 ? comp.TP_time : null, tpC: comp.TP_BT > 0 ? C(comp.TP_BT) : null,
+    ccS: ccS ? Math.round(ccS * 10) / 10 : null, ccC, fcS: fcS ? Math.round(fcS * 10) / 10 : null, fcC, endS: Math.round(endS * 10) / 10, endC,
+    tastingNotes: [d.roastingnotes, d.cuppingnotes].filter(Boolean).join("\n\n"),
+    curve, source: "alog", fileName
+  };
+}
+
+// ---------- render ledger ----------
+function filtered() {
+  const q = $("#q").value.trim().toLowerCase();
+  const fc = $("#f-coffee").value, fm = $("#f-machine").value;
+  return roasts.filter(r =>
+    (!fc || r.origin === fc) && (!fm || r.machine === fm) &&
+    (!q || [r.logNo, r.batchNo, r.origin, r.varietal, r.process, r.profile, r.notes].join(" ").toLowerCase().includes(q)));
+}
+
+function render() {
+  const origins = [...new Set(roasts.map(r => r.origin).filter(Boolean))].sort();
+  const sel = $("#f-coffee"), cur = sel.value;
+  sel.innerHTML = `<option value="">Todos los cafés</option>` + origins.map(o => `<option ${o===cur?"selected":""}>${esc(o)}</option>`).join("");
+
+  const list = filtered();
+  const ev = (t, c) => `<td class="ev">${fmtT(t)}<span>${deg(c)}</span></td>`;
+  $("#rows").innerHTML = list.map(r => {
+    const m = metrics(r);
+    return `<tr data-id="${esc(r.id)}" tabindex="0">
+      <td class="lot">${esc(short(r))}${isRef(r) ? `<span class="star" title="Tueste de referencia" aria-label="referencia">★</span>` : ""}</td>
+      <td>${fmtDate(r.date)}</td>
+      <td class="origin" title="${esc(r.origin)}">${esc(r.origin || "Sin café")}<span>${esc([r.varietal, r.process].filter(Boolean).join(" · ") || r.machine || "")}</span></td>
+      <td class="num">${num(r.greenG,1)}</td>
+      <td class="num">${num(r.roastedG,1)}</td>
+      <td class="num"><span class="flag ${lossFlag(m.loss)}">${pct(m.loss)}</span></td>
+      ${ev(r.ccS, r.ccC)}${ev(r.fcS, r.fcC)}${ev(r.endS, r.endC)}
+      <td class="ev">${pct(m.dev)}<span>${fmtT(m.devS)}</span></td>
+      <td class="ev">${r.cupping ? num(r.cupping, 2) : "—"}<span>${restDays(r) != null ? restDays(r) + " d" : "&nbsp;"}</span></td>
+      <td>${phaseBar(m)}</td></tr>`;
+  }).join("");
+
+  $("#cards").innerHTML = list.map(r => {
+    const m = metrics(r);
+    return `<button class="card" data-id="${esc(r.id)}">
+      <div class="row"><strong>${esc(r.origin || "Sin café")}</strong><span class="lot">${esc(tag(r))}${isRef(r) ? " ★" : ""}</span></div>
+      <div class="row meta"><span>${fmtDate(r.date)} · ${fmtT(r.endS)} · ${deg(r.endC)}</span><span>Merma ${pct(m.loss)} · DEV ${pct(m.dev)}${r.cupping ? " · Cata " + num(r.cupping, 2) : ""}</span></div>
+      ${phaseBar(m)}
+    </button>`;
+  }).join("");
+
+  $("#empty").hidden = list.length > 0;
+  $("#empty").querySelector("h2").textContent = roasts.length ? "Ningún tueste coincide con el filtro" : "Aún no hay tuestes registrados";
+  $("#empty").querySelector("p").hidden = !!roasts.length;
+  $("#count").textContent = roasts.length ? `${list.length} de ${roasts.length} tuestes` : "";
+
+  const nowYm = today().slice(0,7);
+  const ym = selMonth || nowYm;
+  const [yy, mm] = ym.split("-").map(Number);
+  $("#m-label").textContent = new Date(yy, mm - 1, 1).toLocaleDateString("es-CL", { month: "long", year: "numeric" });
+  $("#m-next").disabled = ym >= nowYm;
+  $("#m-now").hidden = ym === nowYm;
+  const byMonth = new Map();
+  roasts.forEach(r => { if (!r.date) return; const k = r.date.slice(0,7); const o = byMonth.get(k) || { n: 0, g: 0 }; o.n++; o.g += r.roastedG || 0; byMonth.set(k, o); });
+  if (!byMonth.has(nowYm)) byMonth.set(nowYm, { n: 0, g: 0 });
+  const monthsSorted = [...byMonth.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+  const maxG = Math.max(1, ...monthsSorted.map(([, o]) => o.g));
+  $("#months").innerHTML = monthsSorted.map(([k, o]) => {
+    const [y2, m2] = k.split("-").map(Number);
+    const lab = new Date(y2, m2 - 1, 1).toLocaleDateString("es-CL", { month: "short", year: "2-digit" }).replace(".", "");
+    return `<button data-m="${k}" aria-pressed="${k === ym}"><small>${esc(lab)} · ${o.n} tueste${o.n === 1 ? "" : "s"}</small><b>${num(o.g / 1000, 2)} kg</b><i style="width:${Math.max(2, o.g / maxG * 72).toFixed(0)}px"></i></button>`;
+  }).join("");
+  const month = roasts.filter(r => (r.date||"").startsWith(ym));
+  const avg = a => a.length ? a.reduce((s,v)=>s+v,0)/a.length : null;
+  $("#s-count").textContent = month.length;
+  $("#s-count-sub").textContent = `${roasts.length} en total, todos los meses`;
+  $("#s-kg-sub").textContent = `kg tostados · ${num(month.reduce((s,r)=>s+(r.greenG||0),0)/1000, 2)} kg de verde`;
+  $("#s-kg").textContent = num(month.reduce((s,r)=>s+(r.roastedG||0),0)/1000, 2);
+  $("#s-loss").textContent = pct(avg(month.map(r=>metrics(r).loss).filter(v=>v!=null)));
+  $("#s-dev").textContent = pct(avg(month.map(r=>metrics(r).dev).filter(v=>v!=null)));
+  $("#btn-export").hidden = !roasts.length || !downloads;
+
+  if (!$("#view-cmp").hidden) renderCompare();
+  if (!$("#view-inv").hidden) renderInventory();
+  if (openId && $("#panel").dataset.mode === "view") {
+    const r = roasts.find(x => x.id === openId);
+    if (r) showDetail(r); else closePanel();
+  }
+}
+["#q","#f-coffee","#f-machine"].forEach(s => $(s).addEventListener("input", render));
+const shiftMonth = d => { const [y, m] = (selMonth || today().slice(0,7)).split("-").map(Number); const dt = new Date(y, m - 1 + d, 1); selMonth = `${dt.getFullYear()}-${pad2(dt.getMonth()+1)}`; if (selMonth >= today().slice(0,7)) selMonth = null; render(); };
+$("#m-prev").onclick = () => shiftMonth(-1);
+$("#m-next").onclick = () => shiftMonth(1);
+$("#m-now").onclick = () => { selMonth = null; render(); };
+$("#months").addEventListener("click", e => { const b = e.target.closest("[data-m]"); if (!b) return; selMonth = b.dataset.m === today().slice(0,7) ? null : b.dataset.m; render(); });
+const openFromEvent = e => { const el = e.target.closest("[data-id]"); if (!el) return; const r = roasts.find(x => x.id === el.dataset.id); if (r) showDetail(r); };
+$("#rows").addEventListener("click", openFromEvent);
+$("#rows").addEventListener("keydown", e => { if (e.key === "Enter") openFromEvent(e); });
+$("#cards").addEventListener("click", openFromEvent);
+
+// ---------- panel ----------
+function openPanel(title, sub, mode) {
+  $("#panel-title").innerHTML = esc(title) + (sub ? `<small>${esc(sub)}</small>` : "");
+  $("#panel").dataset.mode = mode;
+  $("#panel").hidden = false; $("#scrim").hidden = false;
+  $("#panel-body").scrollTop = 0;
+}
+function closePanel() { $("#panel").hidden = true; $("#scrim").hidden = true; openId = null; staged = []; }
+$("#btn-close").onclick = closePanel;
+$("#scrim").onclick = closePanel;
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#panel").hidden) closePanel(); });
+
+function chartSVG(r) {
+  const c = r.curve; if (!c || !c.t || c.t.length < 3) return "";
+  const W = 640, H = 260, L = 40, R = 12, T = 12, B = 28;
+  const tMax = Math.max(r.endS || 0, c.t[c.t.length-1]);
+  const useEt = !c.pr.some(v => v != null) && Array.isArray(c.et) && c.et.some(v => v != null);
+  const sec2 = useEt ? c.et : c.pr, sec2Label = useEt ? "ET (temperatura del aire)" : "Perfil";
+  const vals = c.bt.concat(sec2).filter(v => v != null);
+  const yMax = Math.ceil(Math.max(...vals, 220) / 20) * 20, yMin = 0;
+  const x = t => L + (t / tMax) * (W - L - R);
+  const y = v => T + (1 - (v - yMin) / (yMax - yMin)) * (H - T - B);
+  const path = arr => arr.map((v,i) => v == null ? "" : `${i && arr[i-1] != null ? "L" : "M"}${x(c.t[i]).toFixed(1)},${y(v).toFixed(1)}`).join("");
+  let grid = "";
+  for (let v = 0; v <= yMax; v += 50) grid += `<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/><text x="${L-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--f-mono)">${v}</text>`;
+  const step = tMax > 540 ? 120 : 60;
+  for (let t = 0; t <= tMax; t += step) grid += `<text x="${x(t)}" y="${H-8}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="var(--f-mono)">${fmtT(t)}</text>`;
+  const mark = (t, v, lab) => t ? `<line x1="${x(t)}" x2="${x(t)}" y1="${T}" y2="${H-B}" stroke="var(--muted)" stroke-dasharray="2 3"/>
+    <circle cx="${x(t)}" cy="${y(v)}" r="4.5" fill="var(--curve-bt)" stroke="var(--surface)" stroke-width="2"/>
+    <text x="${x(t)-5}" y="${T+10}" text-anchor="end" font-size="11" fill="var(--fg)" font-family="var(--f-mono)">${lab}</text>` : "";
+  return `<div class="chart" id="chart">
+    <div class="legend"><span><i style="border-color:var(--curve-bt)"></i>Temperatura medida</span><span><i style="border-color:var(--curve-pr);border-top-style:dashed"></i>${sec2Label}</span></div>
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Curva de tueste">
+      ${grid}
+      <line x1="${L}" x2="${W-R}" y1="${H-B}" y2="${H-B}" stroke="var(--line)"/>
+      <path d="${path(sec2)}" fill="none" stroke="var(--curve-pr)" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <path d="${path(c.bt)}" fill="none" stroke="var(--curve-bt)" stroke-width="2" stroke-linejoin="round"/>
+      ${mark(r.ccS, r.ccC ?? 170, "CC")}${mark(r.fcS, r.fcC ?? 205, "1C")}${mark(r.endS, r.endC ?? 212, "Fin")}
+      <line id="xh" y1="${T}" y2="${H-B}" stroke="var(--fg)" stroke-opacity=".35" visibility="hidden"/>
+      <rect x="${L}" y="${T}" width="${W-L-R}" height="${H-T-B}" fill="transparent" id="hit"/>
+    </svg><div class="tip" id="tip" hidden></div></div>`;
+}
+function wireChart(r) {
+  const hit = document.getElementById("hit"); if (!hit) return;
+  const svg = hit.ownerSVGElement, tip = $("#tip"), xh = document.getElementById("xh"), c = r.curve;
+  const W = 640, L = 40, R = 12;
+  const tMax = Math.max(r.endS || 0, c.t[c.t.length-1]);
+  const move = e => {
+    const b = svg.getBoundingClientRect();
+    const px = (e.clientX - b.left) / b.width * W;
+    const t = Math.max(0, Math.min(tMax, (px - L) / (W - L - R) * tMax));
+    let i = 0; while (i < c.t.length - 1 && c.t[i] < t) i++;
+    const xx = L + c.t[i] / tMax * (W - L - R);
+    xh.setAttribute("x1", xx); xh.setAttribute("x2", xx); xh.setAttribute("visibility", "visible");
+    tip.hidden = false; tip.style.left = (xx / W * b.width) + "px"; tip.style.top = "40px";
+    const useEt = !c.pr.some(v => v != null) && Array.isArray(c.et);
+    tip.textContent = `${fmtT(c.t[i])} · ${deg(c.bt[i])} grano · ${useEt ? deg(c.et[i]) + " aire" : deg(c.pr[i]) + " perfil"}`;
+  };
+  hit.addEventListener("pointermove", move);
+  hit.addEventListener("pointerleave", () => { tip.hidden = true; xh.setAttribute("visibility","hidden"); });
+}
+
+function devTable(r, ref) {
+  const rows = METRICS.map(m => {
+    const get = typeof m.key === "function" ? m.key : x => x[m.key];
+    const a = get(r), b = get(ref.roast);
+    if (a == null || b == null || !isFinite(a) || !isFinite(b)) return "";
+    const d = a - b, ad = Math.abs(d);
+    const lvl = ad <= m.tol[0] ? "ok" : ad <= m.tol[1] ? "warn" : "bad";
+    const word = { ok: "en rango", warn: "revisar", bad: "fuera" }[lvl];
+    return `<tr><td>${esc(m.label)}</td><td class="num">${esc(m.fmt(a))}</td><td class="num">${esc(m.fmt(b))}</td>
+      <td class="num">${ad < 1e-9 ? "0" : (d > 0 ? "+" : "−") + esc(sdFmt(m, ad))}</td><td><span class="tag ${lvl}">${word}</span></td></tr>`;
+  }).join("");
+  return rows ? `<div class="devtab"><table><thead><tr><th>Métrica</th><th class="num">Este</th><th class="num">Referencia</th><th class="num">Diferencia</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : "";
+}
+
+function showDetail(r) {
+  openId = r.id;
+  const m = metrics(r), ref = refFor(r), rm = rorMetrics(r), cost = costOf(r), rd = restDays(r);
+  openPanel(r.origin || "Tueste sin café", `${esc(tag(r))}${isRef(r) ? " ★ referencia" : ""} · ${fmtDate(r.date)} · ${r.machine || ""}${r.profile ? " · perfil " + r.profile : ""}`, "view");
+  const item = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
+  const sec = t => `<div><h3 class="section-title">${t}</h3></div>`;
+  let refHtml;
+  if (!r.origin) refHtml = "";
+  else if (ref && ref.roast.id === r.id) refHtml = `<div class="ref-note"><strong>★ Tueste de referencia</strong> de ${esc(r.origin)}${ref.profile ? ", perfil " + esc(ref.profile) : ""}. Los demás tuestes de este café se comparan con este.</div>`;
+  else if (ref) refHtml = `${sec(`Comparado con la referencia · ${esc(tag(ref.roast))}`)}${devTable(r, ref) || `<div class="ref-note">No hay métricas en común para comparar.</div>`}`;
+  else refHtml = `<div class="ref-note">Este café aún no tiene tueste de referencia. Marca tu mejor tueste con «Marcar como referencia» y los demás se compararán con él.</div>`;
+
+  $("#panel-body").innerHTML = `
+    <div class="evgrid">
+      <div><small>Cambio de color</small><b>${fmtT(r.ccS)}</b><small>${deg(r.ccC)}</small></div>
+      <div><small>1.er crack</small><b>${fmtT(r.fcS)}</b><small>${deg(r.fcC)}</small></div>
+      <div><small>Final</small><b>${fmtT(r.endS)}</b><small>${deg(r.endC)}</small></div>
+      <div><small>Merma</small><b class="flag ${lossFlag(m.loss)}">${pct(m.loss)}</b><small>${num(r.greenG,1)} → ${num(r.roastedG,1)} g</small></div>
+    </div>
+    ${m.dry != null && m.mai != null && m.dev != null ? `<div>${phaseBar(m, true)}
+      <div class="phase-legend">
+        <div><small><span class="sw" style="background:var(--ph-dry)"></span>Secado</small><b>${fmtT(m.dryS)}</b><small>${pct(m.dry)}</small></div>
+        <div><small><span class="sw" style="background:var(--ph-mai)"></span>Maillard</small><b>${fmtT(m.maiS)}</b><small>${pct(m.mai)}</small></div>
+        <div><small><span class="sw" style="background:var(--ph-dev)"></span>Desarrollo (DEV)</small><b>${fmtT(m.devS)}</b><small>${pct(m.dev)}</small></div>
+      </div></div>` : ""}
+    ${refHtml}
+    ${chartSVG(r)}
+    ${rm ? `<div class="rorrow">
+        <span>RoR en cambio de color <b>${rorFmt(rm.ccR)}</b></span>
+        <span>RoR en 1.er crack <b>${rorFmt(rm.fcR)}</b></span>
+        <span>RoR al final <b>${rorFmt(rm.endR)}</b></span>
+        ${rm.crash ? `<span class="tag bad">crash tras el 1.er crack</span>` : ""}${rm.flick ? `<span class="tag warn">flick: el RoR sube al final</span>` : ""}${rm.stall ? `<span class="tag warn">RoR muy bajo al final</span>` : ""}
+        ${!rm.crash && !rm.flick && !rm.stall && rm.fcR != null ? `<span class="tag ok">RoR descendente y parejo</span>` : ""}
+      </div>` : ""}
+    ${sec("Cata y color")}
+    <dl class="detail">
+      ${item("Puntaje", r.cupping ? num(r.cupping, 2) : "—")}${item("Fecha de cata", r.cupDate ? fmtDate(r.cupDate) : "—")}
+      ${item("Días de reposo", rd != null ? rd + " días" : "—")}${item("Método", esc(r.cupMethod || "—"))}
+      ${item("Color grano (Agtron)", r.colorWhole ? num(r.colorWhole, 1) : "—")}${item("Color molido (Agtron)", r.colorGround ? num(r.colorGround, 1) : "—")}
+    </dl>
+    ${r.cupNotes ? `<div><span class="eyebrow">Notas de taza</span><div class="notes">${esc(r.cupNotes)}</div></div>` : ""}
+    ${sec("Café y condiciones")}
+    <dl class="detail">
+      ${item("Origen", esc(r.origin || "—"))}${item("Varietal", esc(r.varietal || "—"))}
+      ${item("Proceso", esc(r.process || "—"))}${item("Altura", r.altitude ? num(r.altitude) + " msnm" : "—")}
+      ${item("Densidad", r.density ? num(r.density, 2) + " kg/l" : "—")}${item("Humedad", r.moisture ? num(r.moisture, 1) + "%" : "—")}
+      ${item("Temp. ambiente", r.ambientC != null ? deg(r.ambientC) : "—")}${item("Nivel de tueste", r.level != null ? num(r.level, 1) : "—")}
+      ${item("Destino", esc(r.dest || "—"))}
+      ${r.chargeC != null ? item("Temp. de carga", deg(r.chargeC)) : ""}${r.tpS ? item("Punto de inflexión", `${fmtT(r.tpS)} · ${deg(r.tpC)}`) : ""}
+    </dl>
+    ${sec("Costo")}
+    <dl class="detail">
+      ${cost ? `${item("Lote de verde", esc(cost.lots.map(l => l.lotCode || l.supplier || "sin código").join(", ")))}
+        ${item("Costo del verde", clp(cost.green))}${item("Costo por kg tostado", clp(cost.perKgRoasted))}`
+        : item("Sin datos", "Registra el lote de este café en Inventario para calcular el costo.")}
+    </dl>
+    ${sec("Trazabilidad")}
+    <dl class="detail">
+      ${item("Lote de producción", prodLot(r))}${item("Fecha de tueste", fmtDate(r.date))}
+      ${item("Envasado", r.packDate ? fmtDate(r.packDate) : "—")}${item("Vencimiento", r.bestBefore ? fmtDate(r.bestBefore) : "—")}
+      ${item("Formato", esc(r.packFormat || "—"))}${item("Lote de verde", esc(alloc.byRoast.get(r.id)?.parts.map(p => p.lot.lotCode || p.lot.supplier || "—").join(", ") || "—"))}
+    </dl>
+    ${r.notes ? `<div><span class="eyebrow">Notas</span><div class="notes">${esc(r.notes)}</div></div>` : ""}`;
+  wireChart(r);
+  const canRef = canWrite !== false && r.origin;
+  $("#panel-foot").innerHTML = canWrite === false ? "" :
+    `<button class="btn danger" id="p-del">Eliminar</button>
+     ${canRef ? `<button class="btn" id="p-ref">${isRef(r) ? "Quitar referencia" : "Marcar como referencia"}</button>` : ""}
+     <button class="btn primary" id="p-edit">Editar y agregar cata</button>`;
+  if (canWrite !== false) {
+    $("#p-edit").onclick = () => showForm(r);
+    if (canRef) $("#p-ref").onclick = () => toggleRef(r);
+    $("#p-del").onclick = () => {
+      $("#panel-foot").innerHTML = `<div class="confirm">¿Eliminar el ${esc(tag(r))}? No se puede deshacer.
+        <button class="btn" id="p-no">Cancelar</button><button class="btn danger" id="p-yes">Sí, eliminar</button></div>`;
+      $("#p-no").onclick = () => showDetail(r);
+      $("#p-yes").onclick = async () => {
+        try {
+          await db.collection(COL).doc(r.id).delete();
+          for (const x of refs.filter(x => x.roastId === r.id)) await db.collection(REFS).doc(x.id).delete();
+          closePanel(); toast("Tueste eliminado");
+        } catch (e) { handleWriteError(e); }
+      };
+    };
+  }
+}
+const rorFmt = v => v == null || !isFinite(v) ? "—" : v.toFixed(1).replace(".", ",") + " °C/min";
+async function toggleRef(r) {
+  try {
+    const mine = refs.filter(x => x.roastId === r.id);
+    if (mine.length) {
+      for (const x of mine) await db.collection(REFS).doc(x.id).delete();
+      toast("Referencia quitada");
+    } else {
+      await db.collection(REFS).doc(refKey(r.origin, r.profile)).set({ origin: r.origin, profile: r.profile || "", roastId: r.id, setBy: myId, setAt: Date.now() });
+      toast(r.profile ? `Referencia de ${r.origin}, perfil ${r.profile}` : `Referencia de ${r.origin}`);
+    }
+  } catch (e) { handleWriteError(e); }
+}
+
+// ---------- coffee fields (shared by form and import) ----------
+function coffeeFields(v) {
+  return `<datalist id="dl-origin">${cafes.map(c => `<option value="${esc(c.origin)}">`).join("")}</datalist>
+    <fieldset><legend>Café</legend>
+      <label class="full">Origen<input id="cf-origin" list="dl-origin" value="${esc(v.origin)}" placeholder="Ej. Brasil, Santa Catarina"></label>
+      <label>Varietal<input id="cf-varietal" value="${esc(v.varietal)}"></label>
+      <label>Proceso<input id="cf-process" value="${esc(v.process)}"></label>
+      <label>Altura (msnm)<input id="cf-altitude" class="mono" inputmode="numeric" value="${esc(v.altitude ?? "")}"></label>
+      <label>Densidad (kg/l)<input id="cf-density" class="mono" inputmode="decimal" value="${esc(v.density ?? "")}" placeholder="0,61"></label>
+      <label>Humedad (%)<input id="cf-moisture" class="mono" inputmode="decimal" value="${esc(v.moisture ?? "")}" placeholder="11,5"></label>
+      <label>Destino<select id="cf-dest"><option value=""></option>${DESTS.map(d => `<option ${d===v.dest?"selected":""}>${d}</option>`).join("")}</select></label>
+    </fieldset>`;
+}
+function wireCoffeeAutofill() {
+  $("#cf-origin").addEventListener("change", () => {
+    const c = cafes.find(x => x.origin.toLowerCase() === $("#cf-origin").value.trim().toLowerCase());
+    if (!c) return;
+    [["varietal","cf-varietal"],["process","cf-process"],["altitude","cf-altitude"],["density","cf-density"],["moisture","cf-moisture"]].forEach(([k,id]) => {
+      const el = document.getElementById(id); if (!el.value && c[k] != null) el.value = String(c[k]).replace(".", ",");
+    });
+  });
+}
+const nOrNull = v => { v = String(v ?? "").trim().replace(",", "."); if (v === "") return null; const n = Number(v); return isFinite(n) ? n : NaN; };
+function readCoffee() {
+  return { origin: $("#cf-origin").value.trim(), varietal: $("#cf-varietal").value.trim(), process: $("#cf-process").value.trim(),
+    altitude: nOrNull($("#cf-altitude").value), density: nOrNull($("#cf-density").value), moisture: nOrNull($("#cf-moisture").value), dest: $("#cf-dest").value };
+}
+async function saveCoffee(c) {
+  if (!c.origin) return;
+  const body = { origin: c.origin, varietal: c.varietal || null, process: c.process || null, altitude: c.altitude, density: c.density, moisture: c.moisture, updatedAt: Date.now() };
+  try { await db.collection(CAFES).doc(slug(c.origin)).set(body); } catch {}
+}
+
+// ---------- import ----------
+async function readFiles(files) {
+  const out = [];
+  for (const f of files) {
+    const kind = /\.klog$/i.test(f.name) ? "klog" : /\.alog$/i.test(f.name) ? "alog" : null;
+    if (!kind) { out.push({ fileName: f.name, error: "Solo se aceptan archivos .klog (Kaffelogic) o .alog (Artisan)." }); continue; }
+    try { const x = kind === "klog" ? parseKlog(await f.text(), f.name) : parseAlog(await f.text(), f.name); if (!x.docId) throw new Error("No se pudo leer el número de log."); out.push(x); }
+    catch (e) { out.push({ fileName: f.name, error: e.message }); }
+  }
+  return out;
+}
+function startImport(parsed) {
+  if (canWrite === false || !db) { toast("Tu acceso es solo de lectura."); return; }
+  const byLog = new Map(staged.filter(s => !s.error).map(s => [s.docId, s]));
+  parsed.forEach(p => { if (p.error) staged.push(p); else byLog.set(p.docId, p); });
+  staged = [...staged.filter(s => s.error), ...[...byLog.values()].sort((a,b) => (a.roastedAt || a.date || "").localeCompare(b.roastedAt || b.date || "") || (a.logNo ?? 0) - (b.logNo ?? 0))];
+  showImport();
+}
+function showImport() {
+  openId = null;
+  openPanel("Cargar logs", "Kaffelogic (.klog) o Artisan (.alog). Los tiempos, temperaturas y fases salen del archivo; completa el café y los pesos que falten.", "import");
+  const good = staged.filter(s => !s.error);
+  if (!staged.length) {
+    $("#panel-body").innerHTML = `<div class="drop-inline" id="drop-inline"><strong>Arrastra los archivos aquí</strong>
+      <span><b>Kaffelogic:</b> archivos .klog de la memoria USB, carpeta kaffelogic/roast-logs.<br><b>Santoker con Artisan:</b> archivos .alog que guarda Artisan (Archivo → Guardar).<br>Puedes cargar varios a la vez y mezclar ambos.</span>
+      <button class="btn primary" id="pick">Elegir archivos</button></div>`;
+    $("#pick").onclick = () => $("#file").click();
+    $("#panel-foot").innerHTML = "";
+    return;
+  }
+  const last = roasts.find(r => r.origin) || {};
+  const fromFile = good.find(s => s.fileOrigin);
+  const known = fromFile && cafes.find(c => c.origin.toLowerCase() === fromFile.fileOrigin.toLowerCase());
+  const prev = window.__impCoffee || (fromFile
+    ? { origin: fromFile.fileOrigin, varietal: known?.varietal, process: known?.process, altitude: known?.altitude, density: known?.density ?? fromFile.density, moisture: known?.moisture ?? fromFile.moisture }
+    : { origin: last.origin, varietal: last.varietal, process: last.process, altitude: last.altitude, density: last.density, moisture: last.moisture, dest: last.dest });
+  const load = window.__impLoad ?? good.find(s => s.loadG)?.loadG ?? 100;
+  const g = v => v != null ? String(v).replace(".", ",") : "";
+  $("#panel-body").innerHTML = `
+    ${coffeeFields(prev)}
+    <fieldset><legend>Carga</legend>
+      <label>Peso inicial por defecto (g)<input id="i-green" class="mono" inputmode="decimal" value="${esc(g(load))}"></label>
+      <p class="two" style="margin:0;align-self:end;color:var(--muted);font-size:13px">Se usa en las filas sin peso verde. Los logs de Artisan traen sus propios pesos si los anotaste ahí.</p>
+    </fieldset>
+    <div>
+      <div class="eyebrow" style="margin-bottom:8px">${good.length} log${good.length===1?"":"s"} leído${good.length===1?"":"s"}</div>
+      <div class="imp"><table>
+        <thead><tr><th></th><th>Log</th><th>Tostadora</th><th>Fecha</th><th>Perfil</th><th class="num">CC</th><th class="num">1.er crack</th><th class="num">Final</th><th class="num">DEV</th><th>Verde g</th><th>Tostado g</th></tr></thead>
+        <tbody>${staged.map((s, i) => {
+          if (s.error) return `<tr><td></td><td colspan="10" class="bad">${esc(s.fileName)}: ${esc(s.error)}</td></tr>`;
+          const exists = roasts.find(r => r.id === s.docId);
+          const m = metrics(s);
+          const machineSel = s.source === "klog" ? `Kaffelogic Nano 7` :
+            `<select id="mc-${i}" aria-label="Tostadora">${MACHINES.map(x => `<option ${x === (exists?.machine || s.machine) ? "selected" : ""}>${x}</option>`).join("")}</select>`;
+          return `<tr>
+            <td><input type="checkbox" id="inc-${i}" ${exists ? "" : "checked"} aria-label="Incluir ${esc(tag(s))}"></td>
+            <td class="lot">${esc(short(s))}${exists ? `<div class="dup">ya registrado</div>` : ""}</td>
+            <td>${machineSel}</td>
+            <td>${fmtDate(s.date)}</td><td>${esc(s.profile)}</td>
+            <td class="ev">${fmtT(s.ccS)}<span>${deg(s.ccC)}</span></td>
+            <td class="ev">${fmtT(s.fcS)}<span>${deg(s.fcC)}</span></td>
+            <td class="ev">${fmtT(s.endS)}<span>${deg(s.endC)}</span></td>
+            <td class="ev">${pct(m.dev)}<span>${fmtT(m.devS)}</span></td>
+            <td><input type="text" id="gw-${i}" inputmode="decimal" value="${esc(g(exists?.greenG ?? s.greenG))}" placeholder="${esc(g(load))}" aria-label="Peso verde ${esc(tag(s))}"></td>
+            <td><input type="text" id="rw-${i}" inputmode="decimal" value="${esc(g(exists?.roastedG ?? s.roastedG))}" placeholder="${s.source === "klog" ? "87,5" : ""}" aria-label="Peso tostado ${esc(tag(s))}"></td>
+          </tr>`; }).join("")}
+        </tbody></table></div>
+      <p class="eyebrow" style="margin-top:8px;text-transform:none;letter-spacing:0">Los logs «ya registrados» vienen sin marcar. Si los marcas, se actualizan su curva y sus tiempos, y se conservan el café y las notas que ya tenían.</p>
+    </div>
+    <div class="err" id="imp-err" hidden></div>`;
+  wireCoffeeAutofill();
+  $("#panel-foot").innerHTML = `<button class="btn ghost" id="imp-more">Agregar más logs</button><button class="btn" id="imp-cancel">Cancelar</button><button class="btn primary" id="imp-save">Guardar tuestes</button>`;
+  $("#imp-more").onclick = () => { window.__impCoffee = readCoffee(); window.__impLoad = $("#i-green").value; $("#file").click(); };
+  $("#imp-cancel").onclick = closePanel;
+  $("#imp-save").onclick = saveImport;
+}
+async function saveImport() {
+  const coffee = readCoffee();
+  const defGreen = nOrNull($("#i-green").value);
+  const errs = [];
+  const picks = staged.map((s, i) => ({ s, i })).filter(({ s, i }) => !s.error && document.getElementById("inc-" + i)?.checked);
+  if (!picks.length) errs.push("Marca al menos un log para guardar.");
+  const newOnes = picks.filter(({ s }) => !roasts.find(r => r.id === s.docId));
+  if (newOnes.length && !coffee.origin) errs.push("Escribe el origen del café.");
+  if (defGreen != null && !(defGreen > 0)) errs.push("El peso inicial por defecto debe ser mayor que 0.");
+  ["altitude","density","moisture"].forEach(k => { if (Number.isNaN(coffee[k])) errs.push("Revisa altura, densidad y humedad: solo números."); });
+  const wts = {};
+  picks.forEach(({ s, i }) => {
+    const gw = nOrNull(document.getElementById("gw-" + i).value) ?? defGreen;
+    const rw = nOrNull(document.getElementById("rw-" + i).value);
+    if (Number.isNaN(gw) || !(gw > 0)) errs.push(`Falta el peso verde de ${tag(s)}.`);
+    else if (Number.isNaN(rw) || (rw != null && !(rw > 0 && rw < gw))) errs.push(`Peso tostado de ${tag(s)}: debe ser menor que el peso verde.`);
+    wts[i] = { gw, rw, machine: document.getElementById("mc-" + i)?.value || s.machine };
+  });
+  if (errs.length) { const e = $("#imp-err"); e.hidden = false; setTimeout(() => e.scrollIntoView({ behavior: "smooth", block: "center" }), 0); e.textContent = [...new Set(errs)].join(" "); return; }
+
+  const btn = $("#imp-save"); btn.disabled = true; btn.textContent = "Guardando…";
+  let ok = 0;
+  try {
+    for (const { s, i } of picks) {
+      const id = s.docId;
+      const prev = roasts.find(r => r.id === id);
+      const { fileName, error, loadG, docId, fileOrigin, tastingNotes, ...logData } = s;
+      const w = wts[i];
+      const fileCoffee = { density: s.density, moisture: s.moisture };
+      for (const k of ["density", "moisture", "greenG", "roastedG"]) delete logData[k];
+      const body = prev
+        ? { ...stripId(prev), ...logData, machine: w.machine, greenG: w.gw, roastedG: w.rw ?? prev.roastedG ?? null, updatedAt: Date.now(), updatedBy: myId }
+        : { ...logData, ...coffee, density: coffee.density ?? fileCoffee.density ?? null, moisture: coffee.moisture ?? fileCoffee.moisture ?? null,
+            machine: w.machine, greenG: w.gw, roastedG: w.rw, notes: tastingNotes || "", createdBy: myId, createdAt: Date.now() };
+      if (prev && !prev.origin && coffee.origin) Object.assign(body, coffee);
+      await db.collection(COL).doc(id).set(body);
+      ok++;
+    }
+    await saveCoffee(coffee);
+    window.__impCoffee = null; window.__impLoad = null;
+    closePanel();
+    toast(`${ok} tueste${ok===1?"":"s"} guardado${ok===1?"":"s"}`);
+  } catch (e) {
+    btn.disabled = false; btn.textContent = "Guardar tuestes";
+    if (ok) toast(`Se guardaron ${ok}; falló el resto.`);
+    handleWriteError(e);
+  }
+}
+const stripId = r => { const { id, ...rest } = r; return rest; };
+
+$("#btn-import").onclick = () => { staged = []; showImport(); };
+$("#file").addEventListener("change", async e => {
+  const files = [...e.target.files]; e.target.value = "";
+  if (files.length) startImport(await readFiles(files));
+});
+// page-wide drag & drop
+let dragDepth = 0;
+const hasFiles = e => [...(e.dataTransfer?.types || [])].includes("Files");
+window.addEventListener("dragenter", e => { if (!hasFiles(e) || canWrite === false || !db) return; e.preventDefault(); dragDepth++; $("#dropzone").hidden = false; });
+window.addEventListener("dragleave", e => { if (!hasFiles(e)) return; dragDepth = Math.max(0, dragDepth-1); if (!dragDepth) $("#dropzone").hidden = true; });
+window.addEventListener("dragover", e => { if (hasFiles(e)) e.preventDefault(); });
+window.addEventListener("drop", async e => {
+  if (!hasFiles(e)) return; e.preventDefault(); dragDepth = 0; $("#dropzone").hidden = true;
+  if (canWrite === false || !db) return;
+  if ($("#panel").dataset.mode !== "import" || $("#panel").hidden) { staged = []; }
+  startImport(await readFiles([...e.dataTransfer.files]));
+});
+
+// ---------- manual form / edit ----------
+function showForm(r) {
+  const isNew = !r;
+  openId = isNew ? null : r.id;
+  r = r || { date: today(), machine: "Santoker RX5", greenG: null };
+  openPanel(isNew ? "Registro manual" : `Editar log ${r.logNo ?? ""}`, isNew ? "Para tuestes sin log, por ejemplo en la Santoker." : (r.origin || ""), "form");
+  const f = (id, label, val, cls = "", extra = "") => `<label class="${cls}">${label}<input id="${id}" ${extra} value="${esc(val ?? "")}"></label>`;
+  $("#panel-body").innerHTML = `
+    <fieldset><legend>Tueste</legend>
+      ${f("i-date","Fecha",r.date,"",'type="date"')}
+      ${f("i-log","N.º de log",r.logNo,"",'class="mono" inputmode="numeric" placeholder="Opcional"')}
+      <label>Tostadora<select id="i-machine">${MACHINES.map(m => `<option ${m===r.machine?"selected":""}>${m}</option>`).join("")}</select></label>
+      ${f("i-profile","Perfil",r.profile,"full")}
+      ${f("i-green","Peso inicial (g)",r.greenG != null ? String(r.greenG).replace(".",",") : "","",'class="mono" inputmode="decimal"')}
+      ${f("i-roasted","Peso final (g)",r.roastedG != null ? String(r.roastedG).replace(".",",") : "","",'class="mono" inputmode="decimal"')}
+    </fieldset>
+    <fieldset><legend>Eventos</legend>
+      ${f("i-ccs","CC tiempo (mm:ss)",r.ccS ? fmtT(r.ccS) : "","",'class="mono" placeholder="3:37"')}
+      ${f("i-fcs","1.er crack tiempo",r.fcS ? fmtT(r.fcS) : "","",'class="mono" placeholder="6:45"')}
+      ${f("i-ends","Tiempo final",r.endS ? fmtT(r.endS) : "","",'class="mono" placeholder="7:59"')}
+      ${f("i-ccc","CC temp (°C)",r.ccC,"",'class="mono" inputmode="decimal"')}
+      ${f("i-fcc","1.er crack temp (°C)",r.fcC,"",'class="mono" inputmode="decimal"')}
+      ${f("i-endc","Temp. final (°C)",r.endC,"",'class="mono" inputmode="decimal"')}
+    </fieldset>
+    ${coffeeFields(r)}
+    <fieldset><legend>Cata</legend>
+      ${f("i-cup","Puntaje (0–100)",r.cupping,"",'class="mono" inputmode="decimal" placeholder="84,5"')}
+      ${f("i-cupdate","Fecha de cata",r.cupDate,"",'type="date"')}
+      <label>Método<select id="i-cupmethod"><option value=""></option>${["Cupping SCA","Espresso","Filtro"].map(x => `<option ${x===r.cupMethod?"selected":""}>${x}</option>`).join("")}</select></label>
+      <label class="full">Notas de taza<textarea id="i-cupnotes" placeholder="Acidez, dulzor, cuerpo, defectos…">${esc(r.cupNotes)}</textarea></label>
+    </fieldset>
+    <fieldset><legend>Color y condiciones</legend>
+      ${f("i-colw","Color grano (Agtron)",r.colorWhole,"",'class="mono" inputmode="decimal" placeholder="Opcional"')}
+      ${f("i-colg","Color molido (Agtron)",r.colorGround,"",'class="mono" inputmode="decimal" placeholder="Opcional"')}
+      ${f("i-amb","Temp. ambiente (°C)",r.ambientC,"",'class="mono" inputmode="decimal"')}
+    </fieldset>
+    <fieldset><legend>Trazabilidad · lote ${esc(r.date ? prodLot({ ...r, id: r.id || "nuevo" }) : "")}</legend>
+      ${f("i-pack","Fecha de envasado",r.packDate,"",'type="date"')}
+      ${f("i-bb","Vencimiento",r.bestBefore,"",`type="date" title="Si lo dejas vacío, se calcula a ${SHELF_MONTHS} meses del envasado"`)}
+      ${f("i-format","Formato",r.packFormat,"",'placeholder="Ej. 4 × 250 g"')}
+    </fieldset>
+    <fieldset><legend>Notas</legend>
+      <label class="full">Notas del tueste<textarea id="i-notes">${esc(r.notes)}</textarea></label>
+    </fieldset>
+    <div class="err" id="form-err" hidden></div>`;
+  wireCoffeeAutofill();
+  $("#panel-foot").innerHTML = `<button class="btn" id="f-cancel">Cancelar</button><button class="btn primary" id="f-save">${isNew ? "Guardar tueste" : "Guardar cambios"}</button>`;
+  $("#f-cancel").onclick = () => isNew ? closePanel() : showDetail(roasts.find(x => x.id === r.id) || r);
+  $("#f-save").onclick = () => saveForm(isNew ? null : r);
+}
+async function saveForm(existing) {
+  const v = id => $(id).value;
+  const f = {
+    date: v("#i-date"), logNo: nOrNull(v("#i-log")), machine: v("#i-machine"), profile: v("#i-profile").trim(),
+    greenG: nOrNull(v("#i-green")), roastedG: nOrNull(v("#i-roasted")),
+    ccS: parseT(v("#i-ccs")), fcS: parseT(v("#i-fcs")), endS: parseT(v("#i-ends")),
+    ccC: nOrNull(v("#i-ccc")), fcC: nOrNull(v("#i-fcc")), endC: nOrNull(v("#i-endc")),
+    cupping: nOrNull(v("#i-cup")), cupDate: v("#i-cupdate") || null, cupMethod: v("#i-cupmethod") || null, cupNotes: v("#i-cupnotes").trim(),
+    colorWhole: nOrNull(v("#i-colw")), colorGround: nOrNull(v("#i-colg")), ambientC: nOrNull(v("#i-amb")),
+    packDate: v("#i-pack") || null, bestBefore: v("#i-bb") || null, packFormat: v("#i-format").trim(),
+    notes: v("#i-notes").trim(), ...readCoffee()
+  };
+  if (f.packDate && !f.bestBefore) f.bestBefore = addMonths(f.packDate, SHELF_MONTHS);
+  const errs = [];
+  if (!f.date) errs.push("Falta la fecha.");
+  if (!f.origin) errs.push("Escribe el origen del café.");
+  if (!(f.greenG > 0)) errs.push("El peso inicial debe ser mayor que 0.");
+  if (f.roastedG != null && !(f.roastedG > 0 && f.roastedG < f.greenG)) errs.push("El peso final debe ser menor que el inicial.");
+  if ([f.ccS, f.fcS, f.endS].some(Number.isNaN)) errs.push("Escribe los tiempos como minutos:segundos, por ejemplo 7:45.");
+  if (f.fcS && f.endS && f.fcS >= f.endS) errs.push("El 1.er crack tiene que ocurrir antes del final.");
+  if (f.ccS && f.fcS && f.ccS >= f.fcS) errs.push("El cambio de color tiene que ocurrir antes del 1.er crack.");
+  if (Object.values(f).some(x => Number.isNaN(x))) errs.push("Revisa los campos numéricos: solo números.");
+  if (f.cupping != null && !(f.cupping >= 0 && f.cupping <= 100)) errs.push("El puntaje de cata va de 0 a 100.");
+  if (f.cupDate && f.date && f.cupDate < f.date) errs.push("La fecha de cata no puede ser anterior al tueste.");
+  if (f.packDate && f.date && f.packDate < f.date) errs.push("La fecha de envasado no puede ser anterior al tueste.");
+  if (f.bestBefore && f.packDate && f.bestBefore <= f.packDate) errs.push("El vencimiento debe ser posterior al envasado.");
+  for (const k of ["colorWhole","colorGround"]) if (f[k] != null && !(f[k] > 0 && f[k] < 150)) errs.push("El color Agtron debe estar entre 0 y 150.");
+  const newId = !existing && f.logNo ? logId(f.logNo) : null;
+  if (newId && roasts.find(r => r.id === newId)) errs.push(`El log ${f.logNo} ya está registrado.`);
+  if (errs.length) { const e = $("#form-err"); e.hidden = false; setTimeout(() => e.scrollIntoView({ behavior: "smooth", block: "center" }), 0); e.textContent = [...new Set(errs)].join(" "); return; }
+  const btn = $("#f-save"); btn.disabled = true; btn.textContent = "Guardando…";
+  try {
+    if (existing) {
+      const body = { ...stripId(existing), ...f, updatedAt: Date.now(), updatedBy: myId };
+      await db.collection(COL).doc(existing.id).set(body);
+      toast("Cambios guardados"); showDetail({ ...body, id: existing.id });
+    } else {
+      const body = { ...f, source: "manual", createdBy: myId, createdAt: Date.now() };
+      const ref = newId ? db.collection(COL).doc(newId) : db.collection(COL).doc();
+      await ref.set(body);
+      toast("Tueste guardado"); showDetail({ ...body, id: ref.id });
+    }
+    await saveCoffee(f);
+  } catch (e) { btn.disabled = false; btn.textContent = existing ? "Guardar cambios" : "Guardar tueste"; handleWriteError(e); }
+}
+$("#btn-new").onclick = () => showForm(null);
+
+// ---------- misc ----------
+function handleWriteError(e) {
+  const code = e && e.code;
+  if (code === "permission-denied" || code === "invalid_argument") { canWrite = false; applyWriteAccess(); notice(`Tu cuenta (${myEmail}) no tiene permiso para guardar. Pídele a Diego que la agregue al equipo.`); closePanel(); }
+  else if (code === "quota_exceeded" || code === "resource-exhausted") toast("Se alcanzó el límite diario gratuito de Firebase. Vuelve a intentar mañana.");
+  else toast("No se pudo guardar. Revisa tu conexión y vuelve a intentar.");
+}
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => t.hidden = true, 3000); }
+function notice(msg) { const n = $("#notice"); n.textContent = msg; n.hidden = false; }
+function applyWriteAccess() {
+  const ok = !!db && canWrite !== false;
+  $("#btn-new").hidden = !ok; $("#btn-import").hidden = !ok; $("#btn-account").hidden = !db;
+}
+
+// ---------- Excel export ----------
+let xlsxP = null;
+const loadXLSX = () => xlsxP || (xlsxP = new Promise((res, rej) => {
+  const sc = document.createElement("script");
+  sc.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+  sc.onload = () => window.XLSX ? res(window.XLSX) : rej(); sc.onerror = () => { xlsxP = null; rej(); };
+  document.head.append(sc);
+}));
+const xlDate = s => { if (!s) return null; const [y,m,d] = s.split("-").map(Number); return (Date.UTC(y,m-1,d) - Date.UTC(1899,11,30)) / 864e5; };
+const FMT = { t: "[m]:ss", p: "0.0%", n1: "0.0", n2: "0.00", i: "0", d: "dd-mm-yyyy", clp: '"$"#,##0' };
+function makeSheet(X, cols, rows) {
+  const ws = {};
+  cols.forEach((c, j) => { ws[X.utils.encode_cell({ r: 0, c: j })] = { t: "s", v: c[0] }; });
+  rows.forEach((row, i) => cols.forEach((c, j) => {
+    let v = typeof c[1] === "function" ? c[1](row) : row[c[1]];
+    if (v == null || v === "" || (typeof v === "number" && !isFinite(v))) return;
+    const ty = c[2] || "s", addr = X.utils.encode_cell({ r: i + 1, c: j });
+    if (ty === "s") { ws[addr] = { t: "s", v: String(v) }; return; }
+    if (ty === "t") v = v / 86400; else if (ty === "p") v = v / 100; else if (ty === "d") v = xlDate(v);
+    if (v == null) return;
+    ws[addr] = { t: "n", v, z: FMT[ty] };
+  }));
+  ws["!ref"] = X.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: Math.max(rows.length, 1), c: cols.length - 1 } });
+  ws["!cols"] = cols.map(c => ({ wch: c[3] || Math.max(10, c[0].length + 2) }));
+  ws["!autofilter"] = { ref: X.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: Math.max(rows.length, 1), c: cols.length - 1 } }) };
+  return ws;
+}
+const M = r => metrics(r);
+$("#btn-export").onclick = async () => {
+  const btn = $("#btn-export"); btn.disabled = true; btn.textContent = "Preparando…";
+  try {
+    const X = await loadXLSX();
+    const all = [...roasts].sort(chrono);
+    const wb = X.utils.book_new();
+    X.utils.book_append_sheet(wb, makeSheet(X, [
+      ["Log","logNo","i",7],["Batch Artisan","batchNo","i"],["Fecha","date","d",11],["Origen","origin","s",34],["Varietal","varietal","s",18],["Altura (msnm)","altitude","i"],
+      ["Proceso","process","s",26],["Densidad (kg/l)","density","n2"],["Humedad %","moisture","n1"],["Peso inicial (g)","greenG","n1"],["Peso final (g)","roastedG","n1"],
+      ["% pérdida",r=>M(r).loss,"p"],["Temp. final (°C)","endC","n1"],["Tiempo final","endS","t"],["DEV",r=>M(r).devS,"t"],["% desarrollo",r=>M(r).dev,"p"],
+      ["TPC (°C)","fcC","n1"],["Tiempo PC","fcS","t"],["Duración Maillard",r=>M(r).maiS,"t"],["% Maillard",r=>M(r).mai,"p"],
+      ["CC (°C)","ccC","n1"],["Tiempo CC","ccS","t"],["Secado",r=>M(r).dryS,"t"],["% secado",r=>M(r).dry,"p"],
+      ["Tostadora","machine","s",18],["Perfil","profile","s",18],["Nivel de tueste","level","n1"],["Temp. ambiente (°C)","ambientC","n1"],["Temp. de carga (°C)","chargeC","n1"],["Punto de inflexión","tpS","t"],
+      ["Referencia",r=>isRef(r)?"Sí":"","s"],
+      ["RoR 1.er crack (°C/min)",r=>rorMetrics(r)?.fcR,"n1"],["RoR cambio de color (°C/min)",r=>rorMetrics(r)?.ccR,"n1"],["RoR final (°C/min)",r=>rorMetrics(r)?.endR,"n1"],
+      ["Crash",r=>{const x=rorMetrics(r);return x&&x.fcR!=null?(x.crash?"Sí":"No"):""},"s"],["Flick",r=>{const x=rorMetrics(r);return x&&x.fcR!=null?(x.flick?"Sí":"No"):""},"s"],["RoR bajo al final",r=>{const x=rorMetrics(r);return x&&x.endR!=null?(x.stall?"Sí":"No"):""},"s"],
+      ["Agtron grano","colorWhole","n1"],["Agtron molido","colorGround","n1"],
+      ["Puntaje de cata","cupping","n2"],["Fecha de cata","cupDate","d",11],["Días de reposo",r=>restDays(r),"i"],["Método de cata","cupMethod","s"],["Notas de taza","cupNotes","s",40],
+      ["Lote de verde",r=>alloc.byRoast.get(r.id)?.parts.map(p=>p.lot.lotCode||p.lot.supplier||"").join(", "),"s",18],
+      ["Costo del verde (CLP)",r=>costOf(r)?.green,"clp"],["Costo por kg tostado (CLP)",r=>costOf(r)?.perKgRoasted,"clp"],
+      ["Lote de producción",r=>prodLot(r),"s",18],["Envasado","packDate","d",11],["Vencimiento","bestBefore","d",11],["Formato","packFormat","s"],
+      ["Destino","dest","s"],["Notas","notes","s",40]
+    ], all), "Tuestes");
+
+    const groups = new Map();
+    for (const r of all) {
+      if (!r.origin) continue;
+      for (const key of [r.origin + "\u0000(todos los perfiles)", r.origin + "\u0000" + (r.profile || "(sin perfil)")]) {
+        if (!groups.has(key)) groups.set(key, []); groups.get(key).push(r);
+      }
+    }
+    const sumRows = [...groups.entries()].map(([k, rs]) => {
+      const [origin, profile] = k.split("\u0000");
+      const row = { origin, profile, n: rs.length };
+      for (const [id, get] of [["cc", r => r.ccS], ["fc", r => r.fcS], ["end", r => r.endS], ["dev", r => M(r).dev], ["endC", r => r.endC], ["loss", r => M(r).loss], ["cup", r => r.cupping], ["ror", r => rorMetrics(r)?.fcR]]) {
+        const st = statsOf(rs.map(get).filter(v => v != null && isFinite(v) && v > 0));
+        if (st) { row[id] = st.mean; row[id + "Sd"] = st.n > 1 ? st.sd : null; }
+      }
+      return row;
+    }).filter((r, i, arr) => !(r.profile !== "(todos los perfiles)" && arr.filter(x => x.origin === r.origin).length === 2));
+    X.utils.book_append_sheet(wb, makeSheet(X, [
+      ["Café","origin","s",34],["Perfil","profile","s",22],["Tuestes","n","i"],
+      ["Tiempo CC (prom.)","cc","t"],["Tiempo CC (desv.)","ccSd","t"],["Tiempo PC (prom.)","fc","t"],["Tiempo PC (desv.)","fcSd","t"],
+      ["Tiempo final (prom.)","end","t"],["Tiempo final (desv.)","endSd","t"],["% desarrollo (prom.)","dev","p"],["% desarrollo (desv.)","devSd","p"],
+      ["Temp. final (prom.)","endC","n1"],["Temp. final (desv.)","endCSd","n1"],["% pérdida (prom.)","loss","p"],["% pérdida (desv.)","lossSd","p"],["RoR 1C (prom.)","ror","n1"],["RoR 1C (desv.)","rorSd","n1"],["Cata (prom.)","cup","n2"],["Cata (desv.)","cupSd","n2"]
+    ], sumRows), "Resumen por café");
+
+    X.utils.book_append_sheet(wb, makeSheet(X, [
+      ["Origen","origin","s",34],["Varietal","varietal","s",18],["Proceso","process","s",26],["Altura (msnm)","altitude","i"],["Densidad (kg/l)","density","n2"],["Humedad %","moisture","n1"]
+    ], cafes), "Cafés");
+
+    X.utils.book_append_sheet(wb, makeSheet(X, [
+      ["Café","origin","s",34],["Proveedor","supplier","s",20],["Código de lote","lotCode","s",16],["Fecha de compra","purchaseDate","d",12],
+      ["Kg comprados","kg","n2"],["Kg usados",l=>(alloc.byLot.get(l.id)?.usedG||0)/1000,"n2"],["Kg restantes",l=>Math.max(0,l.kg-(alloc.byLot.get(l.id)?.usedG||0)/1000),"n2"],
+      ["Precio por kg (CLP)","priceKg","clp"],["Valor restante (CLP)",l=>Math.max(0,l.kg-(alloc.byLot.get(l.id)?.usedG||0)/1000)*(l.priceKg||0),"clp"],
+      ["Tuestes",l=>(alloc.byLot.get(l.id)?.roasts||[]).length,"i"],["Notas","notes","s",30]
+    ], [...lots].sort((a,b)=>(a.purchaseDate||"").localeCompare(b.purchaseDate||""))), "Inventario");
+
+    X.utils.book_append_sheet(wb, makeSheet(X, [
+      ["Lote de producción",r=>prodLot(r),"s",18],["Fecha de tueste","date","d",12],["Log",r=>short(r),"s"],["Café","origin","s",34],["Proceso","process","s",22],
+      ["Lote de verde",r=>alloc.byRoast.get(r.id)?.parts.map(p=>p.lot.lotCode||"").filter(Boolean).join(", "),"s",16],
+      ["Proveedor",r=>[...new Set(alloc.byRoast.get(r.id)?.parts.map(p=>p.lot.supplier).filter(Boolean)||[])].join(", "),"s",18],
+      ["Peso tostado (g)","roastedG","n1"],["Envasado","packDate","d",12],["Vencimiento","bestBefore","d",12],["Formato","packFormat","s",14],["Tostadora","machine","s",18]
+    ], all), "Trazabilidad");
+
+    const curveRows = [];
+    for (const r of all.filter(hasCurve)) {
+      const ror = rorOf(r.curve);
+      r.curve.t.forEach((t, i) => curveRows.push({ logNo: short(r), origin: r.origin, s: Math.round(t), t, bt: r.curve.bt[i], pr: r.curve.pr[i], et: r.curve.et ? r.curve.et[i] : null, ror: ror[i] }));
+    }
+    X.utils.book_append_sheet(wb, makeSheet(X, [
+      ["Log","logNo","s",7],["Café","origin","s",30],["Segundo","s","i"],["Tiempo","t","t"],["Temp. grano (°C)","bt","n1"],["Temp. perfil Kaffelogic (°C)","pr","n1"],["ET Artisan (°C)","et","n1"],["RoR (°C/min)","ror","n1"]
+    ], curveRows), "Curvas");
+
+    const data = X.write(wb, { type: "array", bookType: "xlsx" });
+    const ok = await saveFile(`Tuestes Black Mamba ${today()}.xlsx`, new Blob([data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+    if (ok) toast("Archivo Excel listo");
+  } catch (e) {
+    const code = e && e.code;
+    if (code === "declined") {}
+    else if (code === "rate_limited") toast("Ya hay una descarga esperando tu confirmación.");
+    else if (code === "extension_not_enabled") toast("La descarga de Excel no está disponible en esta vista.");
+    else toast("No se pudo crear el archivo. Revisa tu conexión y vuelve a intentar.");
+  } finally { btn.disabled = false; btn.textContent = "Exportar a Excel"; }
+};
+
+// ---------- compare ----------
+const cmp = { origin: null, profile: "", mode: "bt", slots: new Map(), auto: true };
+const hasCurve = r => r.curve && Array.isArray(r.curve.t) && r.curve.t.length > 2;
+const chrono = (a, b) => (a.date||"").localeCompare(b.date||"") || (a.logNo ?? 0) - (b.logNo ?? 0);
+const svgEl = (tag, attrs) => { const e = document.createElementNS("http://www.w3.org/2000/svg", tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+
+function setView(v) {
+  for (const k of ["log", "cmp", "inv"]) { $("#view-" + k).hidden = k !== v; $("#tab-" + k).setAttribute("aria-selected", String(k === v)); }
+  try { history.replaceState(null, "", { log: "#registro", cmp: "#comparar", inv: "#inventario" }[v]); } catch {}
+  if (v === "cmp") renderCompare();
+  if (v === "inv") renderInventory();
+}
+$("#tab-log").onclick = () => setView("log");
+$("#tab-cmp").onclick = () => setView("cmp");
+$("#tab-inv").onclick = () => setView("inv");
+$("#c-origin").addEventListener("change", e => { cmp.origin = e.target.value; cmp.profile = ""; cmp.slots.clear(); cmp.auto = true; renderCompare(); });
+$("#c-profile").addEventListener("change", e => { cmp.profile = e.target.value; cmp.slots.clear(); cmp.auto = true; renderCompare(); });
+$("#c-m-bt").onclick = () => { cmp.mode = "bt"; renderCompare(); };
+$("#c-m-ror").onclick = () => { cmp.mode = "ror"; renderCompare(); };
+$("#c-picks").addEventListener("change", e => {
+  const id = e.target.dataset.id; if (!id) return;
+  cmp.auto = false;
+  if (e.target.checked) {
+    if (cmp.slots.size >= 8) { e.target.checked = false; toast("Puedes comparar hasta 8 tuestes a la vez."); return; }
+    const used = new Set(cmp.slots.values()); let s = 1; while (used.has(s)) s++;
+    cmp.slots.set(id, s);
+  } else cmp.slots.delete(id);
+  renderCompare();
+});
+
+const interp = (ts, vs, t) => {
+  if (t < ts[0] || t > ts[ts.length-1]) return null;
+  let j = 1; while (j < ts.length && ts[j] < t) j++;
+  if (j >= ts.length) return vs[ts.length-1];
+  const a = vs[j-1], b = vs[j]; if (a == null || b == null) return a ?? b;
+  return a + (b - a) * (t - ts[j-1]) / (ts[j] - ts[j-1]);
+};
+const rorMemo = new WeakMap();
+function rorOf(c) {
+  // rate of rise in °C/min: least-squares slope of the measured temperature over a ±30 s window
+  if (rorMemo.has(c)) return rorMemo.get(c);
+  const n = c.t.length, out = new Array(n).fill(null);
+  let lo = 0, hi = 0;
+  for (let i = 0; i < n; i++) {
+    const t = c.t[i];
+    if (t < 45) continue;
+    while (lo < n && c.t[lo] < t - 30) lo++;
+    while (hi < n - 1 && c.t[hi + 1] <= t + 30) hi++;
+    let sx = 0, sy = 0, sxx = 0, sxy = 0, k = 0;
+    for (let j = lo; j <= hi; j++) { const x = c.t[j] - t, y = c.bt[j]; if (y == null) continue; sx += x; sy += y; sxx += x * x; sxy += x * y; k++; }
+    const den = k * sxx - sx * sx;
+    if (k >= 5 && den > 0) out[i] = (k * sxy - sx * sy) / den * 60;
+  }
+  rorMemo.set(c, out);
+  return out;
+}
+
+function renderCompare() {
+  $("#c-m-bt").setAttribute("aria-pressed", String(cmp.mode === "bt"));
+  $("#c-m-ror").setAttribute("aria-pressed", String(cmp.mode === "ror"));
+  // origins
+  const byOrigin = new Map();
+  roasts.forEach(r => { if (!r.origin) return; const o = byOrigin.get(r.origin) || { n: 0, curves: 0, last: "" }; o.n++; if (hasCurve(r)) o.curves++; if ((r.date||"") > o.last) o.last = r.date || ""; byOrigin.set(r.origin, o); });
+  if (!byOrigin.size) {
+    $("#c-origin").innerHTML = ""; $("#c-picks").innerHTML = ""; $("#c-legend").innerHTML = ""; $("#c-mult").innerHTML = ""; $("#c-table").innerHTML = "";
+    $("#c-overlay").innerHTML = `<div class="empty-plot">Cuando registres tuestes con su café, aquí podrás compararlos.</div>`; return;
+  }
+  if (!cmp.origin || !byOrigin.has(cmp.origin)) {
+    const withCurve = roasts.filter(r => r.origin && hasCurve(r));
+    cmp.origin = (withCurve[0] || roasts.find(r => r.origin)).origin;
+  }
+  $("#c-origin").innerHTML = [...byOrigin.entries()].sort((a,b) => b[1].last.localeCompare(a[1].last))
+    .map(([o, v]) => `<option value="${esc(o)}" ${o === cmp.origin ? "selected" : ""}>${esc(o)} · ${v.n} tueste${v.n===1?"":"s"}${v.curves ? `, ${v.curves} con curva` : ""}</option>`).join("");
+  const ofOrigin = roasts.filter(r => r.origin === cmp.origin);
+  const profs = [...new Set(ofOrigin.map(r => r.profile).filter(Boolean))].sort();
+  if (cmp.profile && !profs.includes(cmp.profile)) cmp.profile = "";
+  $("#c-profile").innerHTML = `<option value="">Todos los perfiles</option>` + profs.map(p => `<option ${p===cmp.profile?"selected":""}>${esc(p)}</option>`).join("");
+  $("#c-profile").disabled = !profs.length;
+
+  const list = ofOrigin.filter(r => !cmp.profile || r.profile === cmp.profile).sort(chrono);
+  const curves = list.filter(hasCurve);
+  for (const id of [...cmp.slots.keys()]) if (!curves.find(r => r.id === id)) cmp.slots.delete(id);
+  if (cmp.auto && !cmp.slots.size) curves.slice(-8).forEach((r, i) => cmp.slots.set(r.id, i + 1));
+
+  $("#c-picks").innerHTML = curves.length ? curves.map(r => {
+    const s = cmp.slots.get(r.id);
+    return `<label class="chip" data-on="${!!s}"><input type="checkbox" data-id="${esc(r.id)}" ${s ? "checked" : ""}>
+      <span class="sw" style="${s ? `background:var(--s${s})` : ""}"></span>${esc(tag(r))} <small>${fmtDate(r.date)}${r.profile && !cmp.profile ? " · " + esc(r.profile) : ""}</small></label>`;
+  }).join("") : `<span style="color:var(--muted);font-size:14px">Este café no tiene curvas todavía. Carga sus logs .klog o .alog para superponerlas.</span>`;
+
+  const sel = curves.filter(r => cmp.slots.has(r.id));
+  const refHit = refFor({ origin: cmp.origin, profile: cmp.profile }) || (() => { const x = refs.find(x => x.origin === cmp.origin); const rr = x && roasts.find(r => r.id === x.roastId); return rr ? { roast: rr } : null; })();
+  const refR = refHit && (!cmp.profile || refHit.roast.profile === cmp.profile) ? refHit.roast : null;
+  drawOverlay(sel, refR);
+  drawStability(list, refR);
+  drawScatter();
+}
+
+function drawOverlay(sel, refR) {
+  const box = $("#c-overlay");
+  $("#c-title").textContent = cmp.mode === "bt" ? "Curvas de temperatura superpuestas" : "Velocidad de calentamiento (RoR) superpuesta";
+  $("#c-sub").textContent = cmp.mode === "bt"
+    ? "Temperatura medida en °C. Los puntos marcan cambio de color, 1.er crack y final de cada tueste."
+    : "Grados por minuto, suavizados con una ventana de 60 s. Desde los 45 s, cuando la lectura se estabiliza.";
+  const showRef = refR && hasCurve(refR) && !sel.includes(refR);
+  $("#c-legend").innerHTML = sel.map(r => `<span><i style="border-color:var(--s${cmp.slots.get(r.id)})"></i>${esc(tag(r))}${r === refR ? " ★" : ""} · ${fmtDate(r.date)}</span>`).join("")
+    + (showRef ? `<span><i style="border-color:var(--fg);border-top-style:dashed"></i>Referencia · ${esc(tag(refR))}</span>` : "")
+    + (sel.length || showRef ? `<span>● eventos: CC, 1.er crack, final</span>` : "");
+  if (!sel.length && !showRef) { box.innerHTML = `<div class="empty-plot">Marca uno o más tuestes arriba para ver sus curvas.</div>`; return; }
+
+  const mk = (r, col, isRef) => { const c = r.curve, ys = cmp.mode === "bt" ? c.bt : rorOf(c); return { r, c, ys, col, isRef, end: r.endS || c.t[c.t.length-1] }; };
+  const series = sel.map(r => mk(r, `var(--s${cmp.slots.get(r.id)})`, false));
+  if (showRef) series.unshift(mk(refR, "var(--fg)", true));
+  const label = series.length <= 4;
+  const W = Math.round(Math.max(340, Math.min(900, box.clientWidth || 900))), H = W < 600 ? 300 : 380, L = 44, R = label ? 40 : 14, T = 14, B = 30;
+  const tMax = Math.max(...series.map(s => Math.max(s.end, s.c.t[s.c.t.length-1])));
+  let vals = series.flatMap(s => s.ys.filter((v, i) => v != null && s.c.t[i] <= s.end + 1));
+  let yMin, yMax, step;
+  if (cmp.mode === "bt") { yMin = Math.floor(Math.min(...vals) / 20) * 20; yMax = Math.ceil(Math.max(...vals) / 20) * 20; step = (yMax - yMin) > 160 ? 40 : 20; }
+  else { vals = vals.filter(v => v > -20 && v < 80); yMin = Math.min(0, Math.floor(Math.min(...vals) / 5) * 5); yMax = Math.min(60, Math.ceil(Math.max(...vals) / 5) * 5); step = yMax - yMin > 30 ? 10 : 5; }
+  const x = t => L + t / tMax * (W - L - R);
+  const y = v => T + (1 - (v - yMin) / (yMax - yMin)) * (H - T - B);
+  const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Curvas superpuestas" });
+  for (let v = yMin; v <= yMax + 1e-9; v += step) {
+    svg.append(svgEl("line", { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: v === 0 && cmp.mode === "ror" ? "var(--line)" : "var(--grid)" }));
+    const tx = svgEl("text", { x: L - 8, y: y(v) + 4, "text-anchor": "end", "font-size": 12, fill: "var(--muted)", "font-family": "var(--f-mono)" }); tx.textContent = v; svg.append(tx);
+  }
+  const tStep = tMax > 660 ? 120 : 60;
+  for (let t = 0; t <= tMax; t += tStep) {
+    const tx = svgEl("text", { x: x(t), y: H - 8, "text-anchor": "middle", "font-size": 12, fill: "var(--muted)", "font-family": "var(--f-mono)" }); tx.textContent = fmtT(t); svg.append(tx);
+  }
+  svg.append(svgEl("line", { x1: L, x2: W - R, y1: H - B, y2: H - B, stroke: "var(--line)" }));
+  for (const s of series) {
+    let d = "", pen = false;
+    s.ys.forEach((v, i) => {
+      const t = s.c.t[i];
+      if (v == null || t > s.end + 1 || v < yMin - 5 || v > yMax + 5) { pen = false; return; }
+      d += `${pen ? "L" : "M"}${x(t).toFixed(1)},${y(Math.max(yMin, Math.min(yMax, v))).toFixed(1)}`; pen = true;
+    });
+    svg.append(svgEl("path", { d, fill: "none", stroke: s.col, "stroke-width": s.isRef ? 1.75 : 2, "stroke-dasharray": s.isRef ? "6 4" : "none", "stroke-linejoin": "round" }));
+  }
+  for (const s of series) for (const t of [s.r.ccS, s.r.fcS, s.r.endS]) {
+    if (!t) continue; const v = interp(s.c.t, s.ys, t); if (v == null || v < yMin || v > yMax) continue;
+    svg.append(svgEl("circle", { cx: x(t), cy: y(v), r: 4.5, fill: s.col, stroke: "var(--surface)", "stroke-width": 2 }));
+  }
+  if (label) for (const s of series) {
+    let i = s.ys.length - 1; while (i > 0 && (s.ys[i] == null || s.c.t[i] > s.end + 1)) i--;
+    const tx = svgEl("text", { x: x(s.c.t[i]) + 6, y: y(Math.max(yMin, Math.min(yMax, s.ys[i]))) + 4, "font-size": 12, fill: "var(--fg)", "font-family": "var(--f-mono)" });
+    tx.textContent = s.isRef ? "ref" : short(s.r); svg.append(tx);
+  }
+  const xh = svgEl("line", { y1: T, y2: H - B, stroke: "var(--fg)", "stroke-opacity": .35, visibility: "hidden" });
+  const hit = svgEl("rect", { x: L, y: T, width: W - L - R, height: H - T - B, fill: "transparent" });
+  svg.append(xh, hit);
+  box.innerHTML = ""; box.append(svg);
+  const tip = document.createElement("div"); tip.className = "ctip"; tip.hidden = true; box.append(tip);
+  hit.addEventListener("pointermove", e => {
+    const b = svg.getBoundingClientRect();
+    const px = (e.clientX - b.left) / b.width * W;
+    const t = Math.round(Math.max(0, Math.min(tMax, (px - L) / (W - L - R) * tMax)));
+    xh.setAttribute("x1", x(t)); xh.setAttribute("x2", x(t)); xh.setAttribute("visibility", "visible");
+    tip.replaceChildren();
+    const head = document.createElement("div"); head.textContent = fmtT(t); tip.append(head);
+    for (const s of series) {
+      const v = t <= s.end ? interp(s.c.t, s.ys, t) : null;
+      const row = document.createElement("div");
+      const k = document.createElement("span"); k.className = "k"; k.style.background = s.col;
+      const bv = document.createElement("b"); bv.textContent = v == null ? "—" : (cmp.mode === "bt" ? deg(v) : v.toFixed(1).replace(".", ",") + "°/min");
+      row.append(k, bv, document.createTextNode(`  ${tag(s.r)}${s.isRef ? " (ref.)" : ""}`)); tip.append(row);
+    }
+    tip.hidden = false;
+    const left = (x(t) / W) * b.width;
+    tip.style.top = "8px";
+    tip.style.left = (left > b.width * 0.6 ? left - tip.offsetWidth - 12 : left + 12) + "px";
+  });
+  hit.addEventListener("pointerleave", () => { tip.hidden = true; xh.setAttribute("visibility", "hidden"); });
+}
+
+const METRICS = [
+  { key: "ccS", label: "Tiempo de cambio de color", fmt: fmtT, tol: [5, 10], unit: "s", min: 10 },
+  { key: "fcS", label: "Tiempo de 1.er crack", fmt: fmtT, tol: [5, 10], unit: "s", min: 10 },
+  { key: "endS", label: "Tiempo final", fmt: fmtT, tol: [5, 10], unit: "s", min: 10 },
+  { key: r => metrics(r).dev, label: "Desarrollo (DEV)", fmt: pct, tol: [1, 2], unit: "%", min: 1 },
+  { key: "endC", label: "Temperatura final", fmt: deg, tol: [1, 2], unit: "°", min: 1 },
+  { key: r => metrics(r).loss, label: "Merma", fmt: pct, tol: [0.5, 1], unit: "%", min: 1 },
+  { key: r => rorMetrics(r)?.fcR, label: "RoR en 1.er crack", fmt: v => v.toFixed(1).replace(".", ",") + " °/min", tol: [1, 2], unit: "r", min: 1 },
+  { key: "colorGround", label: "Color molido (Agtron)", fmt: v => num(v, 1), tol: [1.5, 3], unit: "a", min: 2 },
+  { key: "cupping", label: "Puntaje de cata", fmt: v => num(v, 2), tol: [0.5, 1], unit: "c", min: 1 },
+];
+const sdFmt = (m, v) => m.unit === "s" ? `${Math.round(v)} s` : v.toFixed(1).replace(".", ",") + ({ "%": " pts", r: " °/min", a: "", c: " pts" }[m.unit] ?? "°");
+function statsOf(vals) {
+  const n = vals.length; if (!n) return null;
+  const mean = vals.reduce((a, b) => a + b, 0) / n;
+  const sd = n > 1 ? Math.sqrt(vals.reduce((a, v) => a + (v - mean) ** 2, 0) / (n - 1)) : 0;
+  return { n, mean, sd, min: Math.min(...vals), max: Math.max(...vals) };
+}
+
+function drawStability(list, refR) {
+  $("#c-stab-sub").textContent = `${list.length} tueste${list.length===1?"":"s"} de ${cmp.origin}${cmp.profile ? ", perfil " + cmp.profile : ""}, en orden cronológico. La franja marca ±1 desviación estándar alrededor del promedio (línea punteada).${refR ? ` La línea café es el valor de la referencia (${tag(refR)}).` : ""} Los puntos de color son los tuestes marcados arriba.`;
+  const mult = $("#c-mult"); mult.innerHTML = "";
+  const rowsHtml = [];
+  for (const m of METRICS) {
+    const get = typeof m.key === "function" ? m.key : r => r[m.key];
+    const pts = list.map(r => ({ r, v: get(r) })).filter(p => p.v != null && isFinite(p.v) && p.v > 0);
+    const st = statsOf(pts.map(p => p.v));
+    const cell = document.createElement("div"); cell.className = "mcell";
+    const head = document.createElement("header");
+    const h = document.createElement("h4"); h.textContent = m.label;
+    const sl = document.createElement("div"); sl.className = "stat-line";
+    if (st) {
+      const lvl = st.n < 2 ? "" : st.sd <= m.tol[0] ? "ok" : st.sd <= m.tol[1] ? "warn" : "bad";
+      sl.innerHTML = `<b>${esc(m.fmt(st.mean))}</b> ± ${esc(sdFmt(m, st.sd))}` + (lvl ? ` <span class="stab ${lvl}">${{ok:"estable",warn:"variable",bad:"inestable"}[lvl]}</span>` : "");
+      rowsHtml.push(`<tr><td>${esc(m.label)}</td><td class="num">${esc(m.fmt(st.mean))}</td><td class="num">${st.n > 1 ? esc(sdFmt(m, st.sd)) : "—"}</td><td class="num">${esc(m.fmt(st.min))}</td><td class="num">${esc(m.fmt(st.max))}</td><td class="num">${esc(sdFmt(m, st.max - st.min))}</td><td class="num">${st.n}</td></tr>`);
+    } else sl.textContent = "sin datos";
+    head.append(h, sl); cell.append(head);
+    const rv = refR ? get(refR) : null;
+    if (st) cell.append(miniChart(m, pts, st, cell, rv != null && isFinite(rv) && rv > 0 ? rv : null));
+    mult.append(cell);
+  }
+  $("#c-table").innerHTML = rowsHtml.join("");
+}
+
+function miniChart(m, pts, st, cell, refV) {
+  const W = 320, H = 118, L = 44, R = 10, T = 10, B = 22;
+  const pad = Math.max(st.sd * 1.5, (st.max - st.min) * 0.15, m.min / 2);
+  const lo = Math.min(st.min, st.mean - st.sd, refV ?? Infinity) - pad * 0.4, hi = Math.max(st.max, st.mean + st.sd, refV ?? -Infinity) + pad * 0.4;
+  const n = pts.length;
+  const x = i => n === 1 ? (L + W - R) / 2 : L + i / (n - 1) * (W - L - R);
+  const y = v => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+  const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": m.label });
+  if (n > 1) svg.append(svgEl("rect", { x: L, width: W - L - R, y: y(st.mean + st.sd), height: Math.max(0, y(st.mean - st.sd) - y(st.mean + st.sd)), fill: "var(--accent)", "fill-opacity": .09 }));
+  svg.append(svgEl("line", { x1: L, x2: W - R, y1: y(st.mean), y2: y(st.mean), stroke: "var(--muted)", "stroke-dasharray": "4 4" }));
+  if (refV != null) svg.append(svgEl("line", { x1: L, x2: W - R, y1: y(refV), y2: y(refV), stroke: "var(--accent)", "stroke-width": 1.5 }));
+  for (const [v, a] of [[hi, 0], [lo, 1]]) {
+    const tx = svgEl("text", { x: L - 6, y: a ? y(v) : y(v) + 9, "text-anchor": "end", "font-size": 10.5, fill: "var(--muted)", "font-family": "var(--f-mono)" });
+    tx.textContent = m.fmt(v).replace("%", "").replace("°", ""); svg.append(tx);
+  }
+  const ticks = n <= 8 ? pts.map((_, i) => i) : [0, Math.floor((n-1)/3), Math.floor(2*(n-1)/3), n - 1];
+  for (const i of ticks) {
+    const tx = svgEl("text", { x: x(i), y: H - 6, "text-anchor": "middle", "font-size": 10.5, fill: "var(--muted)", "font-family": "var(--f-mono)" });
+    tx.textContent = short(pts[i].r); svg.append(tx);
+  }
+  if (n > 1) svg.append(svgEl("path", { d: pts.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.v).toFixed(1)}`).join(""), fill: "none", stroke: "var(--muted)", "stroke-opacity": .5, "stroke-width": 1.5 }));
+  const tip = document.createElement("div"); tip.className = "ctip"; tip.hidden = true; cell.append(tip);
+  pts.forEach((p, i) => {
+    const s = cmp.slots.get(p.r.id);
+    const dot = svgEl("circle", { cx: x(i), cy: y(p.v), r: s ? 5 : 4, fill: s ? `var(--s${s})` : "var(--muted)", stroke: "var(--surface)", "stroke-width": 2 });
+    const hit = svgEl("circle", { cx: x(i), cy: y(p.v), r: 11, fill: "transparent", tabindex: 0 });
+    const show = () => {
+      tip.replaceChildren();
+      const b = document.createElement("b"); b.textContent = m.fmt(p.v);
+      tip.append(b, document.createTextNode(`  ${tag(p.r)} · ${fmtDate(p.r.date)}`));
+      const diff = p.v - st.mean;
+      const d2 = document.createElement("div"); d2.textContent = `${diff >= 0 ? "+" : "−"}${sdFmt(m, Math.abs(diff))} vs. promedio`; tip.append(d2);
+      tip.hidden = false;
+      const cb = cell.getBoundingClientRect(), sb = svg.getBoundingClientRect();
+      const left = sb.left - cb.left + x(i) / W * sb.width, top = sb.top - cb.top + y(p.v) / H * sb.height;
+      tip.style.left = Math.min(left + 10, cb.width - tip.offsetWidth - 6) + "px";
+      tip.style.top = Math.max(4, top - tip.offsetHeight - 10) + "px";
+    };
+    hit.addEventListener("pointerenter", show); hit.addEventListener("focus", show);
+    hit.addEventListener("pointerleave", () => tip.hidden = true); hit.addEventListener("blur", () => tip.hidden = true);
+    hit.addEventListener("click", () => showDetail(p.r));
+    svg.append(dot, hit);
+  });
+  return svg;
+}
+
+// ---------- inventory ----------
+const LOW_KG = 1;
+function renderInventory() {
+  $("#btn-lot").hidden = !db || canWrite === false;
+  const rows = [...lots].sort((a, b) => (a.origin || "").localeCompare(b.origin || "") || (a.purchaseDate || "").localeCompare(b.purchaseDate || ""));
+  let stockKg = 0, value = 0, active = 0, low = 0;
+  $("#inv-rows").innerHTML = rows.map(l => {
+    const used = (alloc.byLot.get(l.id)?.usedG || 0) / 1000, left = Math.max(0, l.kg - used);
+    stockKg += left; value += left * (l.priceKg || 0);
+    if (left > 0.0005) active++;
+    const state = left <= 0.0005 ? ["mute", "agotado"] : left < LOW_KG ? ["warn", "stock bajo"] : ["ok", "disponible"];
+    if (state[1] === "stock bajo") low++;
+    const rs = (alloc.byLot.get(l.id)?.roasts || []).map(id => roasts.find(r => r.id === id)).filter(Boolean);
+    const losses = rs.map(r => metrics(r).loss).filter(v => v != null);
+    const avgLoss = losses.length ? losses.reduce((a, b) => a + b, 0) / losses.length : null;
+    const perKgRoasted = l.priceKg > 0 && avgLoss != null ? l.priceKg / (1 - avgLoss / 100) : null;
+    const pctLeft = l.kg > 0 ? Math.min(100, left / l.kg * 100) : 0;
+    return `<tr data-lot="${esc(l.id)}" tabindex="0">
+      <td class="origin" title="${esc(l.origin)}">${esc(l.origin || "—")}</td>
+      <td>${esc(l.lotCode || "—")}<div style="color:var(--muted);font-size:12px">${esc(l.supplier || "")}</div></td>
+      <td>${fmtDate(l.purchaseDate)}</td>
+      <td class="num">${clp(l.priceKg)}</td>
+      <td class="num">${num(l.kg, 2)}</td>
+      <td class="num">${num(used, 2)}</td>
+      <td><div class="stock"><div class="bar"><i style="width:${pctLeft.toFixed(1)}%"></i></div><span>${num(left, 2)} kg</span></div></td>
+      <td class="num">${clp(perKgRoasted)}</td>
+      <td><span class="tag ${state[0]}">${state[1]}</span></td></tr>`;
+  }).join("");
+  $("#inv-empty").hidden = rows.length > 0;
+  $("#v-kg").textContent = num(stockKg, 2);
+  $("#v-val").textContent = clp(value);
+  $("#v-lots").textContent = active;
+  $("#v-low").textContent = low ? `${low} con menos de ${LOW_KG} kg` : "ninguno con stock bajo";
+  const since = localDate(new Date(Date.now() - 30 * 864e5));
+  const recent = roasts.filter(r => (r.date || "") >= since).map(costOf).filter(c => c && c.perKgRoasted);
+  $("#v-cost").textContent = recent.length ? clp(recent.reduce((a, c) => a + c.perKgRoasted, 0) / recent.length) : "—";
+}
+$("#inv-rows").addEventListener("click", e => { const tr = e.target.closest("[data-lot]"); if (tr && canWrite !== false) showLotForm(lots.find(l => l.id === tr.dataset.lot)); });
+$("#inv-rows").addEventListener("keydown", e => { if (e.key === "Enter") { const tr = e.target.closest("[data-lot]"); if (tr && canWrite !== false) showLotForm(lots.find(l => l.id === tr.dataset.lot)); } });
+$("#btn-lot").onclick = () => showLotForm(null);
+
+function showLotForm(l) {
+  const isNew = !l; openId = null;
+  l = l || { purchaseDate: today() };
+  openPanel(isNew ? "Agregar lote de café verde" : "Editar lote", isNew ? "Una compra o un saco. El stock se descuenta solo con cada tueste." : (l.origin || ""), "lot");
+  const used = isNew ? 0 : (alloc.byLot.get(l.id)?.usedG || 0) / 1000;
+  $("#panel-body").innerHTML = `
+    <datalist id="dl-origin2">${[...new Set(cafes.map(c => c.origin).concat(roasts.map(r => r.origin)).filter(Boolean))].sort().map(o => `<option value="${esc(o)}">`).join("")}</datalist>
+    <fieldset><legend>Lote</legend>
+      <label class="full">Café (mismo nombre que usas en los tuestes)<input id="l-origin" list="dl-origin2" value="${esc(l.origin)}" placeholder="Ej. Brasil, Santa Catarina"></label>
+      <label>Proveedor<input id="l-supplier" value="${esc(l.supplier)}"></label>
+      <label>Código de lote<input id="l-code" value="${esc(l.lotCode)}" placeholder="Del saco o factura"></label>
+      <label>Fecha de compra<input id="l-date" type="date" value="${esc(l.purchaseDate)}"></label>
+      <label>Kilos comprados<input id="l-kg" class="mono" inputmode="decimal" value="${l.kg != null ? String(l.kg).replace(".", ",") : ""}" placeholder="10"></label>
+      <label>Precio por kg (CLP)<input id="l-price" class="mono" inputmode="numeric" value="${l.priceKg ?? ""}" placeholder="18000"></label>
+      <label>Total pagado (CLP)<input id="l-total" class="mono" inputmode="numeric" value="${l.priceKg && l.kg ? Math.round(l.priceKg * l.kg) : ""}" placeholder="Opcional"></label>
+      <label class="full">Notas<textarea id="l-notes" placeholder="Factura, puntaje del proveedor, observaciones">${esc(l.notes)}</textarea></label>
+    </fieldset>
+    ${isNew ? "" : `<div class="ref-note">Usado hasta hoy: <strong>${num(used, 2)} kg</strong> en ${(alloc.byLot.get(l.id)?.roasts || []).length} tuestes.</div>`}
+    <div class="err" id="l-err" hidden></div>`;
+  const kgEl = $("#l-kg"), pEl = $("#l-price"), tEl = $("#l-total");
+  tEl.addEventListener("input", () => { const k = nOrNull(kgEl.value), t = nOrNull(tEl.value); if (k > 0 && t > 0) pEl.value = Math.round(t / k); });
+  pEl.addEventListener("input", () => { const k = nOrNull(kgEl.value), p = nOrNull(pEl.value); if (k > 0 && p > 0) tEl.value = Math.round(p * k); });
+  $("#panel-foot").innerHTML = `${isNew ? "" : `<button class="btn danger" id="l-del">Eliminar</button>`}<button class="btn" id="l-cancel">Cancelar</button><button class="btn primary" id="l-save">${isNew ? "Guardar lote" : "Guardar cambios"}</button>`;
+  $("#l-cancel").onclick = closePanel;
+  if (!isNew) $("#l-del").onclick = () => {
+    $("#panel-foot").innerHTML = `<div class="confirm">¿Eliminar este lote? Los tuestes no se borran, pero pierden su costo.
+      <button class="btn" id="l-no">Cancelar</button><button class="btn danger" id="l-yes">Sí, eliminar</button></div>`;
+    $("#l-no").onclick = () => showLotForm(l);
+    $("#l-yes").onclick = async () => { try { await db.collection(VERDE).doc(l.id).delete(); closePanel(); toast("Lote eliminado"); } catch (e) { handleWriteError(e); } };
+  };
+  $("#l-save").onclick = async () => {
+    const body = { origin: $("#l-origin").value.trim(), supplier: $("#l-supplier").value.trim(), lotCode: $("#l-code").value.trim(),
+      purchaseDate: $("#l-date").value, kg: nOrNull(kgEl.value), priceKg: nOrNull(pEl.value), notes: $("#l-notes").value.trim() };
+    const errs = [];
+    if (!body.origin) errs.push("Escribe el café.");
+    if (!body.purchaseDate) errs.push("Falta la fecha de compra.");
+    if (!(body.kg > 0)) errs.push("Los kilos comprados deben ser mayores que 0.");
+    if (body.priceKg != null && !(body.priceKg >= 0)) errs.push("Revisa el precio: solo números.");
+    if (!isNew && body.kg != null && body.kg < used - 0.001) errs.push(`Ya se usaron ${num(used, 2)} kg de este lote; los kilos comprados no pueden ser menos.`);
+    if (errs.length) { const e = $("#l-err"); e.hidden = false; setTimeout(() => e.scrollIntoView({ behavior: "smooth", block: "center" }), 0); e.textContent = errs.join(" "); return; }
+    const btn = $("#l-save"); btn.disabled = true; btn.textContent = "Guardando…";
+    try {
+      if (isNew) await db.collection(VERDE).doc().set({ ...body, createdBy: myId, createdAt: Date.now() });
+      else await db.collection(VERDE).doc(l.id).set({ ...stripId(l), ...body, updatedAt: Date.now(), updatedBy: myId });
+      closePanel(); toast(isNew ? "Lote guardado" : "Cambios guardados");
+    } catch (e) { btn.disabled = false; btn.textContent = isNew ? "Guardar lote" : "Guardar cambios"; handleWriteError(e); }
+  };
+}
+
+// ---------- scatter: relations between variables ----------
+const VARS = [
+  ["ambientC", "Temp. ambiente", r => r.ambientC, v => deg(v)],
+  ["density", "Densidad del verde", r => r.density, v => num(v, 2)],
+  ["moisture", "Humedad del verde", r => r.moisture, v => num(v, 1) + "%"],
+  ["level", "Nivel de tueste (Kaffelogic)", r => r.level, v => num(v, 1)],
+  ["ccS", "Tiempo de cambio de color", r => r.ccS, fmtT],
+  ["fcS", "Tiempo de 1.er crack", r => r.fcS, fmtT],
+  ["endS", "Tiempo final", r => r.endS, fmtT],
+  ["dev", "Desarrollo (DEV %)", r => metrics(r).dev, pct],
+  ["endC", "Temperatura final", r => r.endC, deg],
+  ["loss", "Merma", r => metrics(r).loss, pct],
+  ["rorFc", "RoR en 1.er crack", r => rorMetrics(r)?.fcR, v => v.toFixed(1).replace(".", ",") + " °/min"],
+  ["colorGround", "Color molido (Agtron)", r => r.colorGround, v => num(v, 1)],
+  ["cupping", "Puntaje de cata", r => r.cupping, v => num(v, 2)],
+  ["rest", "Días de reposo", r => restDays(r), v => v + " d"],
+];
+for (const id of ["#x-var", "#y-var"]) $(id).innerHTML = VARS.map(v => `<option value="${v[0]}">${v[1]}</option>`).join("");
+$("#x-var").value = "ambientC"; $("#y-var").value = "fcS";
+["#x-var", "#y-var", "#x-all"].forEach(id => $(id).addEventListener("change", drawScatter));
+function niceTicks(lo, hi, n = 4) {
+  const span = hi - lo || 1, raw = span / n, mag = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 2.5, 5, 10].map(k => k * mag).find(k => k >= raw) || raw;
+  const out = []; for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(+v.toFixed(10));
+  return out;
+}
+function drawScatter() {
+  const box = $("#x-plot"); if (!box || $("#view-cmp").hidden) return;
+  const X = VARS.find(v => v[0] === $("#x-var").value), Y = VARS.find(v => v[0] === $("#y-var").value);
+  const all = $("#x-all").checked;
+  const pool = all ? roasts : roasts.filter(r => r.origin === cmp.origin && (!cmp.profile || r.profile === cmp.profile));
+  const pts = pool.map(r => ({ r, x: X[2](r), y: Y[2](r) })).filter(p => p.x != null && p.y != null && isFinite(p.x) && isFinite(p.y));
+  const n = pts.length;
+  if (n < 3) {
+    $("#x-corr").textContent = `Se necesitan al menos 3 tuestes con ambos datos para ver una relación. Hay ${n}.${all ? "" : " Prueba con «Incluir todos los cafés»."}`;
+    box.innerHTML = ""; return;
+  }
+  const mx = pts.reduce((a, p) => a + p.x, 0) / n, my = pts.reduce((a, p) => a + p.y, 0) / n;
+  let sxy = 0, sxx = 0, syy = 0; pts.forEach(p => { sxy += (p.x - mx) * (p.y - my); sxx += (p.x - mx) ** 2; syy += (p.y - my) ** 2; });
+  const rr = sxx && syy ? sxy / Math.sqrt(sxx * syy) : 0, slope = sxx ? sxy / sxx : 0;
+  const strength = Math.abs(rr) < 0.3 ? "débil o nula" : Math.abs(rr) < 0.6 ? "moderada" : "fuerte";
+  const dir = rr >= 0 ? `cuando sube «${X[1].toLowerCase()}», tiende a subir «${Y[1].toLowerCase()}»` : `cuando sube «${X[1].toLowerCase()}», tiende a bajar «${Y[1].toLowerCase()}»`;
+  $("#x-corr").innerHTML = `Correlación <b>r = ${rr.toFixed(2).replace(".", ",")}</b> · relación ${strength} con ${n} tuestes${Math.abs(rr) >= 0.3 ? `: ${esc(dir)}.` : "."}${n < 8 ? " Con pocos tuestes, tómalo como pista, no como conclusión." : ""}`;
+  const W = Math.round(Math.max(320, Math.min(900, box.clientWidth || 900))), H = 300, L = 64, R = 16, T = 12, B = 40;
+  const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+  const padF = (a, b) => (b - a || Math.abs(a) * 0.1 || 1) * 0.08;
+  const x0 = Math.min(...xs) - padF(Math.min(...xs), Math.max(...xs)), x1 = Math.max(...xs) + padF(Math.min(...xs), Math.max(...xs));
+  const y0 = Math.min(...ys) - padF(Math.min(...ys), Math.max(...ys)), y1 = Math.max(...ys) + padF(Math.min(...ys), Math.max(...ys));
+  const x = v => L + (v - x0) / (x1 - x0) * (W - L - R), y = v => T + (1 - (v - y0) / (y1 - y0)) * (H - T - B);
+  const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `${X[1]} contra ${Y[1]}` });
+  const txt = (a, t, attrs) => { const e = svgEl("text", { "font-size": 11.5, fill: "var(--muted)", "font-family": "var(--f-mono)", ...attrs }); e.textContent = t; a.append(e); };
+  for (const v of niceTicks(y0, y1)) { svg.append(svgEl("line", { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: "var(--grid)" })); txt(svg, Y[3](v), { x: L - 8, y: y(v) + 4, "text-anchor": "end" }); }
+  for (const v of niceTicks(x0, x1, W < 500 ? 3 : 5)) txt(svg, X[3](v), { x: x(v), y: H - B + 18, "text-anchor": "middle" });
+  svg.append(svgEl("line", { x1: L, x2: W - R, y1: H - B, y2: H - B, stroke: "var(--line)" }));
+  txt(svg, X[1], { x: (L + W - R) / 2, y: H - 4, "text-anchor": "middle", "font-family": "var(--f-body)" });
+  if (Math.abs(rr) >= 0.3) svg.append(svgEl("line", { x1: x(x0), x2: x(x1), y1: y(my + slope * (x0 - mx)), y2: y(my + slope * (x1 - mx)), stroke: "var(--muted)", "stroke-dasharray": "5 4", "stroke-width": 1.5 }));
+  const tip = document.createElement("div"); tip.className = "ctip"; tip.hidden = true;
+  for (const p of pts) {
+    const slot = cmp.slots.get(p.r.id), ref = isRef(p.r);
+    const dot = svgEl("circle", { cx: x(p.x), cy: y(p.y), r: slot ? 6 : 5, fill: slot ? `var(--s${slot})` : "var(--curve-bt)", "fill-opacity": slot ? 1 : .75, stroke: ref ? "var(--fg)" : "var(--surface)", "stroke-width": 2 });
+    const hit = svgEl("circle", { cx: x(p.x), cy: y(p.y), r: 12, fill: "transparent", tabindex: 0 });
+    const show = () => {
+      tip.replaceChildren();
+      const a = document.createElement("b"); a.textContent = `${tag(p.r)}${ref ? " ★" : ""}`;
+      tip.append(a, document.createTextNode(` · ${fmtDate(p.r.date)}${all ? " · " + (p.r.origin || "") : ""}`));
+      const l2 = document.createElement("div"); l2.textContent = `${X[1]}: ${X[3](p.x)}`;
+      const l3 = document.createElement("div"); l3.textContent = `${Y[1]}: ${Y[3](p.y)}`;
+      tip.append(l2, l3); tip.hidden = false;
+      const b = svg.getBoundingClientRect(), left = x(p.x) / W * b.width, top = y(p.y) / H * b.height;
+      tip.style.left = Math.max(4, Math.min(left + 12, b.width - tip.offsetWidth - 4)) + "px";
+      tip.style.top = Math.max(0, svg.offsetTop + top - tip.offsetHeight - 8) + "px";
+    };
+    hit.addEventListener("pointerenter", show); hit.addEventListener("focus", show);
+    hit.addEventListener("pointerleave", () => tip.hidden = true); hit.addEventListener("blur", () => tip.hidden = true);
+    hit.addEventListener("click", () => showDetail(p.r));
+    svg.append(dot, hit);
+  }
+  const yl = document.createElement("div"); yl.className = "eyebrow"; yl.style.marginBottom = "4px"; yl.textContent = Y[1];
+  box.replaceChildren(yl, svg, tip);
+}
+
+// ---------- boot ----------
+if (location.hash === "#comparar") setView("cmp");
+if (location.hash === "#inventario") setView("inv");
+render();
+// ---------- files: download on desktop, share sheet on phones ----------
+async function saveFile(name, blob) {
+  try {
+    const file = new File([blob], name, { type: blob.type });
+    if (/iPhone|iPad|Android/i.test(navigator.userAgent) && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: name });
+      return true;
+    }
+  } catch (e) { if (e && e.name === "AbortError") return false; }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.append(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+  return true;
+}
+
+// ---------- account, backup ----------
+const ALL_COLS = [COL, CAFES, VERDE, REFS];
+function showAccount() {
+  openId = null;
+  openPanel("Cuenta", myEmail, "account");
+  $("#panel-body").innerHTML = `
+    <div class="acct-actions">
+      <h3 class="section-title">Respaldo</h3>
+      <p class="sub" style="margin:0;color:var(--muted)">Descarga una copia completa del registro (tuestes, cafés, inventario y referencias) en un archivo. Sirve también para cargar datos de otra versión de la app.</p>
+      <button class="btn" id="bk-down">Descargar respaldo</button>
+      <button class="btn" id="bk-up" ${canWrite === false ? "disabled" : ""}>Importar respaldo…</button>
+      <div class="err" id="bk-msg" hidden></div>
+    </div>`;
+  $("#panel-foot").innerHTML = `<button class="btn" id="acct-out">Cerrar sesión</button>`;
+  $("#bk-down").onclick = downloadBackup;
+  $("#bk-up").onclick = () => $("#backup-file").click();
+  $("#acct-out").onclick = () => { closePanel(); firebase.auth().signOut(); };
+}
+$("#btn-account").onclick = showAccount;
+async function downloadBackup() {
+  const out = { app: "tuestes-black-mamba", version: 1, exportedAt: new Date().toISOString(), collections: {} };
+  for (const c of ALL_COLS) {
+    const snap = await db.collection(c).get();
+    out.collections[c] = {}; snap.docs.forEach(d => { out.collections[c][d.id] = d.data(); });
+  }
+  await saveFile(`Respaldo tuestes ${today()}.json`, new Blob([JSON.stringify(out)], { type: "application/json" }));
+}
+$("#backup-file").addEventListener("change", async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  const msg = $("#bk-msg");
+  try {
+    const data = JSON.parse(await f.text());
+    const cols = data && data.collections;
+    if (!cols || typeof cols !== "object") throw new Error("El archivo no es un respaldo de esta app.");
+    const writes = [];
+    for (const c of ALL_COLS) for (const [id, body] of Object.entries(cols[c] || {})) if (body && typeof body === "object") writes.push([c, id, body]);
+    if (!writes.length) throw new Error("El respaldo está vacío.");
+    msg.hidden = false; msg.style.color = "var(--muted)"; msg.textContent = `Importando ${writes.length} registros…`;
+    for (let i = 0; i < writes.length; i += 400) {
+      const batch = db.batch();
+      writes.slice(i, i + 400).forEach(([c, id, body]) => batch.set(db.collection(c).doc(id), body, { merge: true }));
+      await batch.commit();
+    }
+    msg.style.color = "var(--good)"; msg.textContent = `Listo: ${writes.length} registros importados. Los que ya existían se actualizaron.`;
+  } catch (err) {
+    msg.hidden = false; msg.style.color = "var(--bad)";
+    msg.textContent = err && err.code === "permission-denied" ? "Tu cuenta no tiene permiso para importar." : (err.message || "No se pudo leer el respaldo.");
+  }
+});
+
+// ---------- boot: Firebase ----------
+let unsubs = [];
+function stopData() { unsubs.forEach(u => { try { u(); } catch {} }); unsubs = []; roasts = []; lots = []; refs = []; cafes = []; computeAlloc(); render(); }
+function startData() {
+  stopData();
+  const fail = err => {
+    if (err && err.code === "permission-denied") notice(`Tu cuenta (${myEmail}) no tiene acceso al registro. Pídele a Diego que la agregue al equipo.`);
+    else notice("Se perdió la conexión con el registro. Revisa tu internet; los cambios se guardan cuando vuelva.");
+  };
+  unsubs.push(db.collection(COL).limit(1000).onSnapshot(snap => {
+    roasts = snap.docs.map(d => ({ ...d.data(), id: d.id }))
+      .sort((a,b) => (b.date||"").localeCompare(a.date||"") || (b.logNo ?? 0) - (a.logNo ?? 0) || (b.createdAt||0) - (a.createdAt||0));
+    computeAlloc(); render();
+  }, fail));
+  unsubs.push(db.collection(VERDE).limit(1000).onSnapshot(snap => { lots = snap.docs.map(d => ({ ...d.data(), id: d.id })); computeAlloc(); render(); }, () => {}));
+  unsubs.push(db.collection(REFS).limit(500).onSnapshot(snap => { refs = snap.docs.map(d => ({ ...d.data(), id: d.id })).filter(x => x.origin && x.roastId); render(); }, () => {}));
+  unsubs.push(db.collection(CAFES).limit(500).onSnapshot(snap => { cafes = snap.docs.map(d => d.data()).filter(c => c && c.origin).sort((a,b) => a.origin.localeCompare(b.origin)); }, () => {}));
+}
+(async () => {
+  const cfg = window.FIREBASE_CONFIG;
+  $("#gate").hidden = false;
+  if (!window.firebase || !cfg || !cfg.apiKey || /PEGA/i.test(cfg.apiKey)) { $("#login-form").hidden = true; $("#setup").hidden = false; return; }
+  firebase.initializeApp(cfg);
+  const fdb = firebase.firestore();
+  try { fdb.settings({ ignoreUndefinedProperties: true, merge: true }); } catch {}
+  try { await fdb.enablePersistence({ synchronizeTabs: true }); } catch {}
+  const auth = firebase.auth();
+  try { await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); } catch {}
+  $("#login-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const err = $("#lg-err"); err.hidden = true;
+    const btn = $("#lg-go"); btn.disabled = true; btn.textContent = "Entrando…";
+    try { await auth.signInWithEmailAndPassword($("#lg-email").value.trim(), $("#lg-pass").value); }
+    catch (x) {
+      err.hidden = false;
+      err.textContent = /wrong-password|invalid-credential|user-not-found|invalid-login/.test(x.code || "") ? "Correo o contraseña incorrectos." :
+        x.code === "auth/too-many-requests" ? "Demasiados intentos. Espera unos minutos." :
+        x.code === "auth/network-request-failed" ? "Sin conexión a internet." : "No se pudo entrar: " + (x.message || x.code);
+    } finally { btn.disabled = false; btn.textContent = "Entrar"; }
+  });
+  $("#lg-reset").onclick = async () => {
+    const email = $("#lg-email").value.trim(), err = $("#lg-err");
+    err.hidden = false;
+    if (!email) { err.textContent = "Escribe tu correo arriba y vuelve a tocar «Olvidé mi contraseña»."; return; }
+    try { await auth.sendPasswordResetEmail(email); err.style.color = "var(--good)"; err.textContent = "Te enviamos un correo para cambiar la contraseña."; }
+    catch { err.textContent = "No se pudo enviar el correo. Revisa que esté bien escrito."; }
+  };
+  auth.onAuthStateChanged(u => {
+    if (!u) { db = null; myId = null; myEmail = ""; stopData(); applyWriteAccess(); $("#gate").hidden = false; return; }
+    myId = u.uid; myEmail = u.email || ""; db = fdb; canWrite = null;
+    $("#gate").hidden = true; $("#notice").hidden = true;
+    applyWriteAccess(); startData();
+  });
+})();
+})();
+</script>
+<script>
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+</script>
+</body>
+</html>
