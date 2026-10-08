@@ -532,10 +532,11 @@ let alloc = { byRoast: new Map(), byLot: new Map() };
 function computeAlloc() {
   const byRoast = new Map(), byLot = new Map();
   lots.forEach(l => byLot.set(l.id, { usedG: 0, roasts: [] }));
-  const origins = [...new Set(lots.map(l => l.origin))];
+  // Compara sin importar comas, mayúsculas, tildes ni espacios: "Colombia Natural Sarabi" = "Colombia, Natural Sarabi"
+  const origins = [...new Set(lots.map(l => slug(l.origin)))];
   for (const o of origins) {
-    const ls = lots.filter(l => l.origin === o && l.kg > 0).sort((a,b) => (a.purchaseDate||"").localeCompare(b.purchaseDate||"") || (a.createdAt||0) - (b.createdAt||0));
-    const rs = roasts.filter(r => r.origin === o && r.greenG > 0 && r.date).sort(chrono);
+    const ls = lots.filter(l => slug(l.origin) === o && l.kg > 0).sort((a,b) => (a.purchaseDate||"").localeCompare(b.purchaseDate||"") || (a.createdAt||0) - (b.createdAt||0));
+    const rs = roasts.filter(r => slug(r.origin) === o && r.greenG > 0 && r.date).sort(chrono);
     for (const r of rs) {
       let need = r.greenG, cost = 0; const parts = [];
       for (const l of ls) {
