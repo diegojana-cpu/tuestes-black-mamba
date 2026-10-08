@@ -1,5 +1,5 @@
 // Service worker: la app abre sin conexión. Los datos los sincroniza Firestore por su cuenta.
-const CACHE = "tuestes-v2";
+const CACHE = "tuestes-v3";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./firebase-config.js",
   "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
